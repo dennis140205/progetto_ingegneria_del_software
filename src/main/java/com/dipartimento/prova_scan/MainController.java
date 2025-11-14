@@ -1,12 +1,14 @@
 package com.dipartimento.prova_scan;
 
-import javafx.application.Platform;
+// (Tutti gli import rimangono invariati)
+import javafx.application.Platform; // Questo import non è più strettamente necessario qui, ma non dà fastidio
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -23,6 +25,7 @@ public class MainController {
 
     @FXML
     public void initialize() {
+        // (Il tuo codice initialize rimane invariato)
         colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
         colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
         colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
@@ -52,29 +55,40 @@ public class MainController {
 
     @FXML
     public void scansionaBarcode() {
+        Stage mainStage = (Stage) tabellaProdotti.getScene().getWindow();
         BarcodeScanner scanner = new BarcodeScanner();
-        Stage stage = (Stage) tabellaProdotti.getScene().getWindow();
 
-        scanner.startScanner(stage, codice -> {
-            Prodotto p = db.cercaPerBarcode(codice);
-            if (p != null) {
-                mostraMessaggio("Prodotto già nel database:\n" + p.getNome());
-            } else {
-                var info = OpenFootFactsAPI.getProdottoByBarcode(codice);
-                Platform.runLater(() -> {
-                    try {
-                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dipartimento/prova_scan/aggiungiProdotto.fxml"));
-                        Parent root = loader.load();
-                        AggiungiProdottoController controller = loader.getController();
-                        if (info != null) controller.precompilaCampi(info);
-                        Stage finestra = new Stage();
-                        finestra.setTitle("Aggiungi prodotto");
-                        finestra.setScene(new Scene(root));
-                        finestra.showAndWait();
-                        aggiornaTabella();
-                    } catch (IOException e) { e.printStackTrace(); }
-                });
+        // Avvia lo scanner (che blocca 'mainStage')
+        scanner.startScanner(mainStage, codice -> {
+
+            // --- INIZIO CORREZIONE ---
+            // Rimosso Platform.runLater(). Il codice viene eseguito immediatamente
+            // dato che 'scanner.startScanner' ci chiama già sul thread JavaFX.
+
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dipartimento/prova_scan/aggiungiProdotto.fxml"));
+                Parent root = loader.load();
+                AggiungiProdottoController controller = loader.getController();
+
+                Stage finestraAggiungi = new Stage();
+                finestraAggiungi.setTitle("Aggiungi prodotto");
+                finestraAggiungi.setScene(new Scene(root));
+
+                finestraAggiungi.initOwner(mainStage);
+                finestraAggiungi.initModality(Modality.APPLICATION_MODAL);
+
+                controller.initializeWithBarcode(codice);
+
+                finestraAggiungi.showAndWait();
+
+                // DOPO che la finestra è stata chiusa, aggiorna la tabella
+                aggiornaTabella();
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                mostraMessaggio("Errore nell'apertura della finestra Aggiungi");
             }
+            // --- FINE CORREZIONE ---
         });
     }
 
@@ -86,4 +100,3 @@ public class MainController {
         alert.showAndWait();
     }
 }
-

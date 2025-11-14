@@ -11,6 +11,7 @@ module com.dipartimento.prova_scan {
     requires com.google.zxing.javase;
     requires org.json;
     requires tess4j;
+    requires jakarta.mail;
 
     // --- Pacchetto principale ---
     opens com.dipartimento.prova_scan to javafx.fxml;

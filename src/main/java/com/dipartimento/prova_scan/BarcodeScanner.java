@@ -13,6 +13,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.awt.Dimension;
@@ -20,14 +21,24 @@ import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer; // Import necessario
 
 public class BarcodeScanner {
     private volatile boolean running = true;
     private String resultText = null;
 
-    public void startScanner(Stage parentStage, java.util.function.Consumer<String> onScan) {
+    /**
+     * Avvia lo scanner.
+     * @param parentStage La finestra "proprietaria" (es. la Home) che verrà bloccata.
+     * @param onScan Il Consumer che riceverà il codice (o null se annullato).
+     */
+    public void startScanner(Stage parentStage, Consumer<String> onScan) {
         Stage stage = new Stage();
         stage.setTitle("Scansione Barcode");
+
+        // Imposta la finestra Home come proprietario e bloccala
+        stage.initOwner(parentStage);
+        stage.initModality(Modality.APPLICATION_MODAL);
 
         ImageView imageView = new ImageView();
         imageView.setPreserveRatio(true);
@@ -48,7 +59,7 @@ public class BarcodeScanner {
         Scene scene = new Scene(root, 800, 600);
         stage.setScene(scene);
         stage.setResizable(true);
-        stage.show();
+        stage.show(); // Mostra la finestra modale
 
         new Thread(() -> {
             Webcam webcam = Webcam.getDefault();
@@ -94,7 +105,11 @@ public class BarcodeScanner {
                         resultText = result.getText();
                         running = false;
 
-                        Platform.runLater(() -> overlay.setText("Codice rilevato: " + resultText));
+                        // Codice rilevato, chiudi la finestra (attiverà l'onCloseRequest)
+                        Platform.runLater(() -> {
+                            overlay.setText("Codice rilevato: " + resultText);
+                            stage.close();
+                        });
 
                     } catch (NotFoundException e) {
                         // Nessun barcode trovato nel frame
@@ -109,15 +124,12 @@ public class BarcodeScanner {
             }
 
             webcam.close();
-
-            if (resultText != null) {
-                Platform.runLater(() -> {
-                    stage.close();
-                    onScan.accept(resultText);
-                });
-            }
         }).start();
 
-        stage.setOnCloseRequest(e -> running = false);
+        // Gestore della chiusura: questo è l'UNICO punto che chiama il callback
+        stage.setOnCloseRequest(e -> {
+            running = false; // Ferma il thread
+            onScan.accept(resultText); // Invia il risultato (codice o null)
+        });
     }
 }

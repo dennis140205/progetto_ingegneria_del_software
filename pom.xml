@@ -2,73 +2,137 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.dipartimento</groupId>
-  <artifactId>prova_scan</artifactId>
-  <version>1.0-SNAPSHOT</version>
-  <name>prova_scan</name>
+    <modelVersion>4.0.0</modelVersion>
 
-  <properties>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-<junit.version>5.12.1</junit.version>  </properties>
+    <groupId>com.dipartimento</groupId>
+    <artifactId>prova_scan</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>Gestione Scadenze Prodotti</name>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-controls</artifactId>
-      <version>21.0.6</version>
-    </dependency>
-    <dependency>
-      <groupId>org.openjfx</groupId>
-      <artifactId>javafx-fxml</artifactId>
-      <version>21.0.6</version>
-    </dependency>
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <java.version>21</java.version>
+        <javafx.version>21.0.6</javafx.version>
+        <junit.version>5.10.2</junit.version>
+    </properties>
 
-<dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-engine</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>  </dependencies>
+    <dependencies>
 
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-compiler-plugin</artifactId>
-        <version>3.13.0</version>
-        <configuration>
-          <source>25</source>
-          <target>25</target>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.openjfx</groupId>
-        <artifactId>javafx-maven-plugin</artifactId>
-        <version>0.0.8</version>
-        <executions>
-          <execution>
-            <!-- Default configuration for running with: mvn clean javafx:run -->
-            <id>default-cli</id>
-            <configuration>
-              <mainClass>com.dipartimento.prova_scan/com.dipartimento.prova_scan.HelloApplication</mainClass>
-              <launcher>app</launcher>
-              <jlinkZipName>app</jlinkZipName>
-              <jlinkImageName>app</jlinkImageName>
-              <noManPages>true</noManPages>
-              <stripDebug>true</stripDebug>
-              <noHeaderFiles>true</noHeaderFiles>
-            </configuration>
-          </execution>
-        </executions>
-      </plugin>
-    </plugins>
-  </build>
+        <!-- ✅ JavaFX -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-controls</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-fxml</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-swing</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
+        <!-- ✅ SQLite -->
+        <dependency>
+            <groupId>org.xerial</groupId>
+            <artifactId>sqlite-jdbc</artifactId>
+            <version>3.46.0.0</version>
+        </dependency>
+
+        <!-- ✅ ZXing (Barcode Scanner) -->
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>core</artifactId>
+            <version>3.5.1</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.zxing</groupId>
+            <artifactId>javase</artifactId>
+            <version>3.5.1</version>
+        </dependency>
+
+        <!-- ✅ Webcam Capture -->
+        <dependency>
+            <groupId>com.github.sarxos</groupId>
+            <artifactId>webcam-capture</artifactId>
+            <version>0.3.12</version>
+        </dependency>
+
+        <!-- ✅ JSON -->
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20231013</version>
+        </dependency>
+
+        <!-- ✅ Test -->
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-engine</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <!-- Tess4J OCR -->
+        <dependency>
+            <groupId>net.sourceforge.tess4j</groupId>
+            <artifactId>tess4j</artifactId>
+            <version>5.11.0</version>
+        </dependency>
+
+        <!-- JNA (required for tess4j) -->
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna</artifactId>
+            <version>5.13.0</version>
+        </dependency>
+
+        <!-- JNA platform (Windows native libs) -->
+        <dependency>
+            <groupId>net.java.dev.jna</groupId>
+            <artifactId>jna-platform</artifactId>
+            <version>5.13.0</version>
+        </dependency>
+
+
+
+    </dependencies>
+
+    <build>
+        <plugins>
+
+            <!-- ✅ Compilatore Java -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                </configuration>
+            </plugin>
+
+            <!-- ✅ JavaFX Plugin -->
+            <plugin>
+                <groupId>org.openjfx</groupId>
+                <artifactId>javafx-maven-plugin</artifactId>
+                <version>0.0.8</version>
+                <configuration>
+                    <!-- ⚠️ Classe main completa (cambia se la tua Main ha altro nome o package) -->
+                    <mainClass>com.dipartimento.prova_scan.Main</mainClass>
+                </configuration>
+            </plugin>
+
+        </plugins>
+    </build>
+
 </project>

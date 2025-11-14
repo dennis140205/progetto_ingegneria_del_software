@@ -1,0 +1,19 @@
+<!--<?xml version="1.0" encoding="UTF-8"?>-->
+
+<!--<?import javafx.scene.chart.*?>-->
+<!--<?import javafx.scene.layout.*?>-->
+<!--<?import javafx.geometry.Insets?>-->
+
+<!--<?import javafx.scene.control.Label?>-->
+<!--<VBox xmlns:fx="http://javafx.com/fxml" fx:controller="com.dipartimento.prova_scan.StatisticheController" spacing="10" padding="15">-->
+<!--    <Label text="Statistiche Prodotti"/>-->
+<!--    <PieChart fx:id="pieChart" prefHeight="250"/>-->
+<!--    <BarChart fx:id="barChart" prefHeight="250">-->
+<!--        <xAxis>-->
+<!--            <CategoryAxis label="Categoria"/>-->
+<!--        </xAxis>-->
+<!--        <yAxis>-->
+<!--            <NumberAxis label="Numero Prodotti"/>-->
+<!--        </yAxis>-->
+<!--    </BarChart>-->
+<!--</VBox>-->

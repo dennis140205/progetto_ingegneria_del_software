@@ -1,16 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
 
-<?import javafx.scene.control.Button?>
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.dipartimento.prova_scan.HelloController">
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.dipartimento.prova_scan.MainController">
+    <top>
+        <ToolBar>
+            <Button text="Scansiona Barcode" onAction="#scansionaBarcode"/>
+<!--            <Button text="Aggiungi Manuale" onAction="#apriFinestraAggiungi"/>-->
+<!--            <Button text="Statistiche" onAction="#apriStatistiche"/>-->
+        </ToolBar>
+    </top>
+    <center>
+        <TableView fx:id="tabellaProdotti">
+            <columns>
+                <TableColumn fx:id="colNome" text="Nome" prefWidth="150"/>
+                <TableColumn fx:id="colMarca" text="Marca" prefWidth="100"/>
+                <TableColumn fx:id="colCategoria" text="Categoria" prefWidth="100"/>
+                <TableColumn fx:id="colBarcode" text="Barcode" prefWidth="120"/>
+                <TableColumn fx:id="colScadenza" text="Scadenza" prefWidth="100"/>
+            </columns>
+        </TableView>
+    </center>
     <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+        <Insets top="10" right="10" bottom="10" left="10"/>
     </padding>
-
-    <Label fx:id="welcomeText"/>
-    <Button text="Hello!" onAction="#onHelloButtonClick"/>
-</VBox>
+</BorderPane>

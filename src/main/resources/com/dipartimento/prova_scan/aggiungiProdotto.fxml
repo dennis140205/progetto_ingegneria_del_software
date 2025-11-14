@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.dipartimento.prova_scan.AggiungiProdottoController"
+      spacing="10">
+
+    <padding>
+        <Insets top="15" right="15" bottom="15" left="15"/>
+    </padding>
+
+    <Label text="Aggiungi Prodotto"/>
+
+    <GridPane hgap="10" vgap="10">
+        <Label text="Nome:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="campoNome" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Marca:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="campoMarca" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="Categoria:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="campoCategoria" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <Label text="Barcode:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="campoBarcode" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <Label text="Data Scadenza:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+
+        <HBox spacing="10" GridPane.rowIndex="4" GridPane.columnIndex="1">
+            <DatePicker fx:id="dataScadenza"/>
+            <Button text="📷" fx:id="btnScanDate"/>
+        </HBox>
+
+    </GridPane>
+
+    <Button fx:id="btnSalva" text="Salva" maxWidth="Infinity"/>
+</VBox>

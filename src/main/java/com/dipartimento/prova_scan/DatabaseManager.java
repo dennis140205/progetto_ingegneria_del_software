@@ -5,17 +5,41 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * --- PATTERN SINGLETON ---
+ * Questa classe è un Singleton. Garantisce che esista una sola istanza
+ * del DatabaseManager per gestire la connessione al database.
+ */
 public class DatabaseManager {
+
+    // --- Inizio Pattern Singleton ---
+    private static DatabaseManager instance;
     private final String url = "jdbc:sqlite:prodotti.db";
 
-    public DatabaseManager() {
+    /**
+     * Il costruttore è privato per impedire l'istanziazione
+     * esterna (es. con 'new DatabaseManager()').
+     */
+    private DatabaseManager() {
         creaTabellaSeNonEsiste();
     }
 
+    /**
+     * Metodo statico per ottenere l'unica istanza della classe.
+     * È 'synchronized' per essere sicuro in caso di multi-threading.
+     * @return L'unica istanza di DatabaseManager.
+     */
+    public static synchronized DatabaseManager getInstance() {
+        if (instance == null) {
+            instance = new DatabaseManager();
+        }
+        return instance;
+    }
+    // --- Fine Pattern Singleton ---
+
+
     private void creaTabellaSeNonEsiste() {
-        // --- MODIFICATO ---
-        // 1. Rimosso 'UNIQUE' da barcode
-        // 2. Aggiunto 'quantità'
+        // (Logica invariata...)
         String sql = """
             CREATE TABLE IF NOT EXISTS prodotti (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -33,11 +57,9 @@ public class DatabaseManager {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    /**
-     * --- MODIFICATO ---
-     * Aggiunge un NUOVO prodotto (solo INSERT)
-     */
+
     public void aggiungiProdotto(Prodotto p) {
+        // (Logica invariata...)
         String sql = "INSERT INTO prodotti(nome, marca, categoria, barcode, data_scadenza, quantità) VALUES(?,?,?,?,?,?)";
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -46,16 +68,14 @@ public class DatabaseManager {
             ps.setString(3, p.getCategoria());
             ps.setString(4, p.getBarcode());
             ps.setString(5, p.getDataScadenza().toString());
-            ps.setInt(6, p.getQuantità()); // Aggiunto
+            ps.setInt(6, p.getQuantità());
             ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    /**
-     * --- NUOVO METODO ---
-     * Aggiorna un prodotto esistente basandosi sul suo ID.
-     */
+
     public void aggiornaProdotto(Prodotto p) {
+        // (Logica invariata...)
         String sql = "UPDATE prodotti SET nome = ?, marca = ?, categoria = ?, barcode = ?, data_scadenza = ?, quantità = ? WHERE id = ?";
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -65,13 +85,14 @@ public class DatabaseManager {
             ps.setString(4, p.getBarcode());
             ps.setString(5, p.getDataScadenza().toString());
             ps.setInt(6, p.getQuantità());
-            ps.setInt(7, p.getId()); // Condizione WHERE
+            ps.setInt(7, p.getId());
             ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
     }
 
 
     public List<Prodotto> getProdotti() {
+        // (Logica invariata...)
         List<Prodotto> lista = new ArrayList<>();
         String sql = "SELECT * FROM prodotti";
         try (Connection conn = DriverManager.getConnection(url);
@@ -85,15 +106,16 @@ public class DatabaseManager {
                         rs.getString("categoria"),
                         rs.getString("barcode"),
                         LocalDate.parse(rs.getString("data_scadenza")),
-                        rs.getInt("quantità") // --- AGGIUNTO ---
+                        rs.getInt("quantità")
                 ));
             }
         } catch (Exception e) { e.printStackTrace(); }
         return lista;
     }
 
-    // Questo metodo ora restituisce solo il *primo* prodotto che trova
+
     public Prodotto cercaPerBarcode(String barcode) {
+        // (Logica invariata...)
         String sql = "SELECT * FROM prodotti WHERE barcode = ?";
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -107,7 +129,7 @@ public class DatabaseManager {
                         rs.getString("categoria"),
                         rs.getString("barcode"),
                         LocalDate.parse(rs.getString("data_scadenza")),
-                        rs.getInt("quantità") // --- AGGIUNTO ---
+                        rs.getInt("quantità")
                 );
             }
         } catch (Exception e) { e.printStackTrace(); }
@@ -115,6 +137,7 @@ public class DatabaseManager {
     }
 
     public void eliminaProdotto(int idProdotto) {
+        // (Logica invariata...)
         String sql = "DELETE FROM prodotti WHERE id = ?";
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement ps = conn.prepareStatement(sql)) {

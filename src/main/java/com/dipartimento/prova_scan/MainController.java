@@ -12,7 +12,7 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Properties; // Import necessario
+import java.util.Properties;
 
 public class MainController {
 
@@ -21,13 +21,14 @@ public class MainController {
     @FXML private TableColumn<Prodotto, LocalDate> colScadenza;
     @FXML private TableColumn<Prodotto, Integer> colQuantità;
 
-    // --- CAMPI AGGIUNTI ---
     @FXML private TextField campoEmailMittente;
     @FXML private PasswordField campoPasswordApp;
     @FXML private TextField campoEmailNotifiche;
-    // --- FINE AGGIUNTI ---
 
-    private DatabaseManager db = new DatabaseManager();
+    // --- MODIFICA SINGLETON ---
+    // Ottiene l'unica istanza del DatabaseManager invece di crearne una nuova.
+    private DatabaseManager db = DatabaseManager.getInstance();
+    // --- FINE MODIFICA ---
 
     @FXML
     public void initialize() {
@@ -41,15 +42,13 @@ public class MainController {
         aggiornaTabella();
         NotificheManager.controllaScadenze(db.getProdotti());
 
-        // --- AGGIUNTO ---
         // Carica tutte le impostazioni salvate all'avvio
         Properties userProps = ConfigManager.getUserProperties();
         campoEmailMittente.setText(userProps.getProperty("mail.username", ""));
         campoPasswordApp.setText(userProps.getProperty("mail.password", ""));
         campoEmailNotifiche.setText(userProps.getProperty("mail.to", ""));
-        // --- FINE AGGIUNTO ---
 
-        // (Logica RowFactory per menu contestuale invariata...)
+        // (Logica RowFactory invariata...)
         tabellaProdotti.setRowFactory(tv -> {
             TableRow<Prodotto> row = new TableRow<>() {
                 @Override
@@ -99,12 +98,10 @@ public class MainController {
         });
     }
 
-    /**
-     * --- METODO MODIFICATO ---
-     * Salva TUTTE le impostazioni nel file di configurazione utente.
-     */
+
     @FXML
     private void salvaImpostazioniEmail() {
+        // (Logica invariata...)
         String mittente = campoEmailMittente.getText();
         String password = campoPasswordApp.getText();
         String destinatario = campoEmailNotifiche.getText();
@@ -122,13 +119,13 @@ public class MainController {
     }
 
     private void aggiornaTabella() {
-        // (invariato)
+        // (Logica invariata...)
         List<Prodotto> prodotti = db.getProdotti();
         tabellaProdotti.getItems().setAll(prodotti);
     }
 
     private void apriFinestraModifica(Prodotto prodotto) {
-        // (invariato)
+        // (Logica invariata...)
         try {
             Stage mainStage = (Stage) tabellaProdotti.getScene().getWindow();
 
@@ -156,7 +153,7 @@ public class MainController {
 
     @FXML
     public void apriFinestraAggiungi() {
-        // (invariato)
+        // (Logica invariata...)
         try {
             Stage mainStage = (Stage) tabellaProdotti.getScene().getWindow();
 
@@ -181,7 +178,7 @@ public class MainController {
     }
 
     private void mostraMessaggio(String titolo, String messaggio) {
-        // (invariato)
+        // (Logica invariata...)
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(titolo);
         alert.setHeaderText(null);

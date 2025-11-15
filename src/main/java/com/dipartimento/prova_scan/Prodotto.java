@@ -2,6 +2,12 @@ package com.dipartimento.prova_scan;
 
 import java.time.LocalDate;
 
+/**
+ * --- PATTERN BUILDER (Product) ---
+ * Rappresenta l'oggetto complesso che stiamo costruendo.
+ * È un "POJO" (Plain Old Java Object) con costruttori e getter/setter.
+ * Corrisponde al "Product" (es. ASCIIText) del tuo esempio.
+ */
 public class Prodotto {
     private int id;
     private String nome;
@@ -11,6 +17,11 @@ public class Prodotto {
     private LocalDate dataScadenza;
     private int quantità;
 
+    /**
+     * Costruttore Completo.
+     * Usato dal DatabaseManager per caricare oggetti dal DB
+     * e dal ProdottoBuilderConcreto per costruire l'oggetto finale.
+     */
     public Prodotto(int id, String nome, String marca, String categoria, String barcode, LocalDate dataScadenza, int quantità) {
         this.id = id;
         this.nome = nome;
@@ -21,6 +32,7 @@ public class Prodotto {
         this.quantità = quantità;
     }
 
+    // --- Getters (invariati) ---
     public int getId() { return id; }
     public String getNome() { return nome; }
     public String getMarca() { return marca; }
@@ -29,9 +41,12 @@ public class Prodotto {
     public LocalDate getDataScadenza() { return dataScadenza; }
     public int getQuantità() { return quantità; }
 
+    // --- Setters (usati per la modifica) ---
     public void setId(int id) { this.id = id; }
-
-    // --- AGGIUNTO ---
-    // Necessario per aggiornare la quantità dei prodotti duplicati
     public void setQuantità(int quantità) { this.quantità = quantità; }
+
+    // --- Metodi Fluent (RIMOSSI) ---
+    // public Prodotto setMarca(String marca) { ... }
+    // public Prodotto setCategoria(String categoria) { ... }
+    // public Prodotto setBarcode(String barcode) { ... }
 }

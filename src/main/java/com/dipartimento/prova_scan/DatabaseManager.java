@@ -13,14 +13,18 @@ public class DatabaseManager {
     }
 
     private void creaTabellaSeNonEsiste() {
+        // --- MODIFICATO ---
+        // 1. Rimosso 'UNIQUE' da barcode
+        // 2. Aggiunto 'quantità'
         String sql = """
             CREATE TABLE IF NOT EXISTS prodotti (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 nome TEXT,
                 marca TEXT,
                 categoria TEXT,
-                barcode TEXT UNIQUE,
-                data_scadenza TEXT
+                barcode TEXT, 
+                data_scadenza TEXT,
+                quantità INTEGER
             )
         """;
         try (Connection conn = DriverManager.getConnection(url);
@@ -29,8 +33,12 @@ public class DatabaseManager {
         } catch (Exception e) { e.printStackTrace(); }
     }
 
+    /**
+     * --- MODIFICATO ---
+     * Aggiunge un NUOVO prodotto (solo INSERT)
+     */
     public void aggiungiProdotto(Prodotto p) {
-        String sql = "INSERT OR REPLACE INTO prodotti(nome, marca, categoria, barcode, data_scadenza) VALUES(?,?,?,?,?)";
+        String sql = "INSERT INTO prodotti(nome, marca, categoria, barcode, data_scadenza, quantità) VALUES(?,?,?,?,?,?)";
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, p.getNome());
@@ -38,9 +46,30 @@ public class DatabaseManager {
             ps.setString(3, p.getCategoria());
             ps.setString(4, p.getBarcode());
             ps.setString(5, p.getDataScadenza().toString());
+            ps.setInt(6, p.getQuantità()); // Aggiunto
             ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
     }
+
+    /**
+     * --- NUOVO METODO ---
+     * Aggiorna un prodotto esistente basandosi sul suo ID.
+     */
+    public void aggiornaProdotto(Prodotto p) {
+        String sql = "UPDATE prodotti SET nome = ?, marca = ?, categoria = ?, barcode = ?, data_scadenza = ?, quantità = ? WHERE id = ?";
+        try (Connection conn = DriverManager.getConnection(url);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, p.getNome());
+            ps.setString(2, p.getMarca());
+            ps.setString(3, p.getCategoria());
+            ps.setString(4, p.getBarcode());
+            ps.setString(5, p.getDataScadenza().toString());
+            ps.setInt(6, p.getQuantità());
+            ps.setInt(7, p.getId()); // Condizione WHERE
+            ps.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
+    }
+
 
     public List<Prodotto> getProdotti() {
         List<Prodotto> lista = new ArrayList<>();
@@ -55,13 +84,15 @@ public class DatabaseManager {
                         rs.getString("marca"),
                         rs.getString("categoria"),
                         rs.getString("barcode"),
-                        LocalDate.parse(rs.getString("data_scadenza"))
+                        LocalDate.parse(rs.getString("data_scadenza")),
+                        rs.getInt("quantità") // --- AGGIUNTO ---
                 ));
             }
         } catch (Exception e) { e.printStackTrace(); }
         return lista;
     }
 
+    // Questo metodo ora restituisce solo il *primo* prodotto che trova
     public Prodotto cercaPerBarcode(String barcode) {
         String sql = "SELECT * FROM prodotti WHERE barcode = ?";
         try (Connection conn = DriverManager.getConnection(url);
@@ -75,10 +106,20 @@ public class DatabaseManager {
                         rs.getString("marca"),
                         rs.getString("categoria"),
                         rs.getString("barcode"),
-                        LocalDate.parse(rs.getString("data_scadenza"))
+                        LocalDate.parse(rs.getString("data_scadenza")),
+                        rs.getInt("quantità") // --- AGGIUNTO ---
                 );
             }
         } catch (Exception e) { e.printStackTrace(); }
         return null;
+    }
+
+    public void eliminaProdotto(int idProdotto) {
+        String sql = "DELETE FROM prodotti WHERE id = ?";
+        try (Connection conn = DriverManager.getConnection(url);
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, idProdotto);
+            ps.executeUpdate();
+        } catch (Exception e) { e.printStackTrace(); }
     }
 }

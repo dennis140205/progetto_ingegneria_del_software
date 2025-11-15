@@ -9,14 +9,16 @@ public class Prodotto {
     private String categoria;
     private String barcode;
     private LocalDate dataScadenza;
+    private int quantità;
 
-    public Prodotto(int id, String nome, String marca, String categoria, String barcode, LocalDate dataScadenza) {
+    public Prodotto(int id, String nome, String marca, String categoria, String barcode, LocalDate dataScadenza, int quantità) {
         this.id = id;
         this.nome = nome;
         this.marca = marca;
         this.categoria = categoria;
         this.barcode = barcode;
         this.dataScadenza = dataScadenza;
+        this.quantità = quantità;
     }
 
     public int getId() { return id; }
@@ -25,10 +27,11 @@ public class Prodotto {
     public String getCategoria() { return categoria; }
     public String getBarcode() { return barcode; }
     public LocalDate getDataScadenza() { return dataScadenza; }
+    public int getQuantità() { return quantità; }
 
-    public void setNome(String nome) { this.nome = nome; }
-    public void setMarca(String marca) { this.marca = marca; }
-    public void setCategoria(String categoria) { this.categoria = categoria; }
-    public void setBarcode(String barcode) { this.barcode = barcode; }
-    public void setDataScadenza(LocalDate dataScadenza) { this.dataScadenza = dataScadenza; }
+    public void setId(int id) { this.id = id; }
+
+    // --- AGGIUNTO ---
+    // Necessario per aggiornare la quantità dei prodotti duplicati
+    public void setQuantità(int quantità) { this.quantità = quantità; }
 }

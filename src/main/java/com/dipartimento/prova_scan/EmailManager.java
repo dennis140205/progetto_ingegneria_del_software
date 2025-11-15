@@ -6,29 +6,36 @@ import jakarta.mail.internet.MimeMessage;
 
 import java.util.Properties;
 
-/**
- * Gestisce la logica di invio delle email di notifica.
- */
 public class EmailManager {
 
-    /**
-     * Invia un'email di avviso scadenza.
-     * @param messaggioProdotti L'elenco dei prodotti da includere nel corpo dell'email.
-     */
     public static void inviaEmailScadenza(String messaggioProdotti) {
-        Properties prop = ConfigManager.getProperties();
+        // --- INIZIO MODIFICA ---
+        // 1. Ottieni le proprietà SMTP (host, auth, etc.)
+        Properties smtpProps = ConfigManager.getSmtpProperties();
 
-        final String username = prop.getProperty("mail.username");
-        final String password = prop.getProperty("mail.password");
-        final String toEmail = prop.getProperty("mail.to");
+        // 2. Ottieni le credenziali e il destinatario dal file di config utente
+        Properties userProps = ConfigManager.getUserProperties();
+        final String username = userProps.getProperty("mail.username");
+        final String password = userProps.getProperty("mail.password");
+        final String toEmail = userProps.getProperty("mail.to");
+        // --- FINE MODIFICA ---
 
-        // Verifica se le proprietà essenziali sono caricate
-        if (username == null || password == null || toEmail == null) {
-            System.err.println("Errore: Controlla che mail.username, mail.password e mail.to siano impostati in email.properties.");
+        // Controllo di sicurezza
+        if (toEmail == null || toEmail.isEmpty() || !toEmail.contains("@")) {
+            System.err.println("Invio email fallito: 'mail.to' non è impostata. (Impostala dal programma)");
+            return;
+        }
+        if (username == null || username.isEmpty() || !username.contains("@")) {
+            System.err.println("Invio email fallito: 'mail.username' (mittente) non è impostato.");
+            return;
+        }
+        if (password == null || password.isEmpty()) {
+            System.err.println("Invio email fallito: 'mail.password' (password app) non è impostata.");
             return;
         }
 
-        Session session = Session.getInstance(prop, new Authenticator() {
+        // Passa le smtpProps per la sessione
+        Session session = Session.getInstance(smtpProps, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
                 return new PasswordAuthentication(username, password);

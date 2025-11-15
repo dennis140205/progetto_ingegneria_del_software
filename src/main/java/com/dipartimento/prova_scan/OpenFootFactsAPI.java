@@ -29,7 +29,26 @@ public class OpenFootFactsAPI {
                 ProdottoInfo info = new ProdottoInfo();
                 info.nome = prod.optString("product_name", "Sconosciuto");
                 info.marca = prod.optString("brands", "");
-                info.categoria = prod.optString("categories_tags", "");
+
+                // --- INIZIO MODIFICA CATEGORIA ---
+                // Leggi il campo "categories" (più pulito) invece di "categories_tags"
+                String categorieRaw = prod.optString("categories", "");
+
+                if (categorieRaw != null && !categorieRaw.isEmpty()) {
+                    // Il campo è una stringa tipo: "Bevande, Acque, Acque minerali"
+                    String[] listaCategorie = categorieRaw.split(",");
+
+                    // Prendi l'ultima categoria della lista (la più specifica)
+                    String categoriaPulita = listaCategorie[listaCategorie.length - 1];
+
+                    // Pulisci da eventuali spazi bianchi
+                    info.categoria = categoriaPulita.trim();
+                } else {
+                    // Fallback se il campo "categories" è vuoto
+                    info.categoria = "";
+                }
+                // --- FINE MODIFICA CATEGORIA ---
+
                 info.immagine = prod.optString("image_url", "");
                 info.barcode = barcode;
                 return info;
@@ -47,4 +66,3 @@ public class OpenFootFactsAPI {
         public String barcode;
     }
 }
-

@@ -16,25 +16,34 @@
 
     <GridPane hgap="10" vgap="10">
         <Label text="Nome:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
-        <TextField fx:id="campoNome" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+        <TextField fx:id="campoNome" GridPane.rowIndex="0" GridPane.columnIndex="1" GridPane.columnSpan="2"/>
 
         <Label text="Marca:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
-        <TextField fx:id="campoMarca" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+        <TextField fx:id="campoMarca" GridPane.rowIndex="1" GridPane.columnIndex="1" GridPane.columnSpan="2"/>
+
 
         <Label text="Categoria:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-        <TextField fx:id="campoCategoria" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+        <TextField fx:id="campoCategoria" GridPane.rowIndex="2" GridPane.columnIndex="1" GridPane.columnSpan="2"/>
 
         <Label text="Barcode:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+
         <TextField fx:id="campoBarcode" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
 
-        <Label text="Data Scadenza:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-
-        <HBox spacing="10" GridPane.rowIndex="4" GridPane.columnIndex="1">
-            <DatePicker fx:id="dataScadenza"/>
-            <Button text="📷" fx:id="btnScanDate"/>
+        <HBox spacing="5" GridPane.rowIndex="3" GridPane.columnIndex="2">
+            <Button fx:id="btnScanBarcode" text="📷" onAction="#scansionaEInserisciBarcode"/>
+            <Button fx:id="btnSearchBarcode" text="Cerca" onAction="#cercaInfoBarcode"/>
         </HBox>
+        <Label text="Data Scadenza:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <DatePicker fx:id="dataScadenza" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+        <Button text="📷" fx:id="btnScanDate" GridPane.rowIndex="4" GridPane.columnIndex="2"/>
+
+
+        <Label text="Quantità:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <Spinner fx:id="campoQuantità" editable="true" prefWidth="100" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
 
     </GridPane>
 
-    <Button fx:id="btnSalva" text="Salva" maxWidth="Infinity"/>
+    <Button fx:id="btnSalva" text="Salva" maxWidth="Infinity" onAction="#salvaProdotto"/>
+
 </VBox>

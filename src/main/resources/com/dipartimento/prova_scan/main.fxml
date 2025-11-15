@@ -7,9 +7,19 @@
 <BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.dipartimento.prova_scan.MainController">
     <top>
         <ToolBar>
-            <Button text="Scansiona Barcode" onAction="#scansionaBarcode"/>
-<!--            <Button text="Aggiungi Manuale" onAction="#apriFinestraAggiungi"/>-->
-<!--            <Button text="Statistiche" onAction="#apriStatistiche"/>-->
+            <Button text="Aggiungi Prodotto" onAction="#apriFinestraAggiungi"/>
+            <Separator orientation="VERTICAL" />
+
+            <Label text="Email Mittente:"/>
+            <TextField fx:id="campoEmailMittente" promptText="la.tua.email@gmail.com" prefWidth="150"/>
+
+            <Label text="Password App:"/>
+            <PasswordField fx:id="campoPasswordApp" promptText="password 16 cifre" prefWidth="120"/>
+
+            <Label text="Email Destinatario:"/>
+            <TextField fx:id="campoEmailNotifiche" promptText="email.ricevente@esempio.com" prefWidth="150"/>
+
+            <Button fx:id="btnSalvaEmail" text="Salva Impostazioni" onAction="#salvaImpostazioniEmail"/>
         </ToolBar>
     </top>
     <center>
@@ -20,6 +30,7 @@
                 <TableColumn fx:id="colCategoria" text="Categoria" prefWidth="100"/>
                 <TableColumn fx:id="colBarcode" text="Barcode" prefWidth="120"/>
                 <TableColumn fx:id="colScadenza" text="Scadenza" prefWidth="100"/>
+                <TableColumn fx:id="colQuantità" text="Quantità" prefWidth="80"/>
             </columns>
         </TableView>
     </center>

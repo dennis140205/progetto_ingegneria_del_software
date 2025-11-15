@@ -21,7 +21,7 @@ import java.awt.image.BufferedImage;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Consumer; // Import necessario
+import java.util.function.Consumer;
 
 public class BarcodeScanner {
     private volatile boolean running = true;
@@ -36,7 +36,6 @@ public class BarcodeScanner {
         Stage stage = new Stage();
         stage.setTitle("Scansione Barcode");
 
-        // Imposta la finestra Home come proprietario e bloccala
         stage.initOwner(parentStage);
         stage.initModality(Modality.APPLICATION_MODAL);
 
@@ -48,7 +47,6 @@ public class BarcodeScanner {
         Label overlay = new Label("Inquadra il codice a barre nell'area centrale");
         overlay.setStyle("-fx-background-color: rgba(0,0,0,0.5); -fx-text-fill: white; -fx-padding: 8; -fx-font-size: 16px;");
 
-        // Rettangolo centrale guida
         Rectangle focusRect = new Rectangle(400, 150);
         focusRect.setStroke(Color.RED);
         focusRect.setStrokeWidth(3);
@@ -68,7 +66,6 @@ public class BarcodeScanner {
                 return;
             }
 
-            // Risoluzione massima disponibile
             Dimension[] sizes = webcam.getViewSizes();
             Dimension best = Arrays.stream(sizes)
                     .max((d1,d2) -> Integer.compare(d1.width*d1.height, d2.width*d2.height))
@@ -88,7 +85,6 @@ public class BarcodeScanner {
             while (running && resultText == null) {
                 BufferedImage frame = webcam.getImage();
                 if (frame != null) {
-                    // Ritaglio area centrale
                     int rectWidth = frame.getWidth()/2;
                     int rectHeight = frame.getHeight()/3;
                     int startX = frame.getWidth()/4;
@@ -105,10 +101,9 @@ public class BarcodeScanner {
                         resultText = result.getText();
                         running = false;
 
-                        // Codice rilevato, chiudi la finestra (attiverà l'onCloseRequest)
                         Platform.runLater(() -> {
                             overlay.setText("Codice rilevato: " + resultText);
-                            stage.close();
+                            stage.close(); // Chiudi la finestra
                         });
 
                     } catch (NotFoundException e) {
@@ -117,7 +112,7 @@ public class BarcodeScanner {
                 }
 
                 try {
-                    Thread.sleep(100); // pausa tra i frame
+                    Thread.sleep(100);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
@@ -126,10 +121,19 @@ public class BarcodeScanner {
             webcam.close();
         }).start();
 
-        // Gestore della chiusura: questo è l'UNICO punto che chiama il callback
+        // --- INIZIO CORREZIONE ---
+
+        // 1. Quando l'utente clicca X, ferma solo il thread della fotocamera.
         stage.setOnCloseRequest(e -> {
             running = false; // Ferma il thread
+        });
+
+        // 2. Chiamiamo il MainController SOLO DOPO che la finestra è SPARITA.
+        // Questo evento scatta DOPO 'stage.close()', garantendo che non ci sia blocco.
+        stage.setOnHidden(e -> {
             onScan.accept(resultText); // Invia il risultato (codice o null)
         });
+
+        // --- FINE CORREZIONE ---
     }
 }

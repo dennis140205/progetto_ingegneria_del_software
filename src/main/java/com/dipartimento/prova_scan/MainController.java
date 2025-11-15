@@ -1,7 +1,5 @@
 package com.dipartimento.prova_scan;
 
-// (Tutti gli import rimangono invariati)
-import javafx.application.Platform; // Questo import non è più strettamente necessario qui, ma non dà fastidio
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -14,89 +12,180 @@ import javafx.stage.Stage;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Properties; // Import necessario
 
 public class MainController {
 
     @FXML private TableView<Prodotto> tabellaProdotti;
     @FXML private TableColumn<Prodotto, String> colNome, colMarca, colCategoria, colBarcode;
     @FXML private TableColumn<Prodotto, LocalDate> colScadenza;
+    @FXML private TableColumn<Prodotto, Integer> colQuantità;
+
+    // --- CAMPI AGGIUNTI ---
+    @FXML private TextField campoEmailMittente;
+    @FXML private PasswordField campoPasswordApp;
+    @FXML private TextField campoEmailNotifiche;
+    // --- FINE AGGIUNTI ---
 
     private DatabaseManager db = new DatabaseManager();
 
     @FXML
     public void initialize() {
-        // (Il tuo codice initialize rimane invariato)
         colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
         colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
         colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
         colBarcode.setCellValueFactory(new PropertyValueFactory<>("barcode"));
         colScadenza.setCellValueFactory(new PropertyValueFactory<>("dataScadenza"));
+        colQuantità.setCellValueFactory(new PropertyValueFactory<>("quantità"));
 
         aggiornaTabella();
         NotificheManager.controllaScadenze(db.getProdotti());
 
-        tabellaProdotti.setRowFactory(tv -> new TableRow<>() {
-            @Override
-            protected void updateItem(Prodotto p, boolean empty) {
-                super.updateItem(p, empty);
-                if (p == null || empty) { setStyle(""); return; }
-                LocalDate oggi = LocalDate.now();
-                if (p.getDataScadenza().isBefore(oggi)) setStyle("-fx-background-color: #ffb3b3;");
-                else if (p.getDataScadenza().isBefore(oggi.plusDays(3))) setStyle("-fx-background-color: #fff1b3;");
-                else setStyle("");
-            }
+        // --- AGGIUNTO ---
+        // Carica tutte le impostazioni salvate all'avvio
+        Properties userProps = ConfigManager.getUserProperties();
+        campoEmailMittente.setText(userProps.getProperty("mail.username", ""));
+        campoPasswordApp.setText(userProps.getProperty("mail.password", ""));
+        campoEmailNotifiche.setText(userProps.getProperty("mail.to", ""));
+        // --- FINE AGGIUNTO ---
+
+        // (Logica RowFactory per menu contestuale invariata...)
+        tabellaProdotti.setRowFactory(tv -> {
+            TableRow<Prodotto> row = new TableRow<>() {
+                @Override
+                protected void updateItem(Prodotto p, boolean empty) {
+                    super.updateItem(p, empty);
+                    if (p == null || empty) {
+                        setStyle("");
+                    } else {
+                        LocalDate oggi = LocalDate.now();
+                        if (p.getDataScadenza().isBefore(oggi)) setStyle("-fx-background-color: #ffb3b3;");
+                        else if (p.getDataScadenza().isBefore(oggi.plusDays(3))) setStyle("-fx-background-color: #fff1b3;");
+                        else setStyle("");
+                    }
+                }
+            };
+
+            final MenuItem modificaMenuItem = new MenuItem("Modifica");
+            modificaMenuItem.setOnAction(event -> {
+                Prodotto prodottoDaModificare = row.getItem();
+                apriFinestraModifica(prodottoDaModificare);
+            });
+
+            final MenuItem eliminaMenuItem = new MenuItem("Elimina");
+            eliminaMenuItem.setOnAction(event -> {
+                Prodotto prodottoDaEliminare = row.getItem();
+
+                Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+                alert.setTitle("Conferma Eliminazione");
+                alert.setHeaderText("Sei sicuro di voler eliminare il prodotto?");
+                alert.setContentText(prodottoDaEliminare.getNome() + " (Quantità: " + prodottoDaEliminare.getQuantità() + ")");
+
+                alert.showAndWait().ifPresent(response -> {
+                    if (response == ButtonType.OK) {
+                        db.eliminaProdotto(prodottoDaEliminare.getId());
+                        aggiornaTabella();
+                    }
+                });
+            });
+
+            final ContextMenu contextMenu = new ContextMenu();
+            contextMenu.getItems().addAll(modificaMenuItem, eliminaMenuItem);
+
+            row.contextMenuProperty().bind(
+                    row.emptyProperty().map(empty -> empty ? null : contextMenu)
+            );
+            return row;
         });
     }
 
+    /**
+     * --- METODO MODIFICATO ---
+     * Salva TUTTE le impostazioni nel file di configurazione utente.
+     */
+    @FXML
+    private void salvaImpostazioniEmail() {
+        String mittente = campoEmailMittente.getText();
+        String password = campoPasswordApp.getText();
+        String destinatario = campoEmailNotifiche.getText();
+
+        if (mittente.isEmpty() || !mittente.contains("@") ||
+                password.isEmpty() ||
+                destinatario.isEmpty() || !destinatario.contains("@")) {
+
+            mostraMessaggio("Campi incompleti", "Inserisci email mittente, password app e email destinatario validi.");
+            return;
+        }
+
+        ConfigManager.saveUserSettings(mittente, password, destinatario);
+        mostraMessaggio("Impostazioni Salvare", "Le tue credenziali email sono state salvate in modo sicuro sul tuo computer.");
+    }
+
     private void aggiornaTabella() {
+        // (invariato)
         List<Prodotto> prodotti = db.getProdotti();
         tabellaProdotti.getItems().setAll(prodotti);
     }
 
-    @FXML
-    public void scansionaBarcode() {
-        Stage mainStage = (Stage) tabellaProdotti.getScene().getWindow();
-        BarcodeScanner scanner = new BarcodeScanner();
+    private void apriFinestraModifica(Prodotto prodotto) {
+        // (invariato)
+        try {
+            Stage mainStage = (Stage) tabellaProdotti.getScene().getWindow();
 
-        // Avvia lo scanner (che blocca 'mainStage')
-        scanner.startScanner(mainStage, codice -> {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dipartimento/prova_scan/aggiungiProdotto.fxml"));
+            Parent root = loader.load();
 
-            // --- INIZIO CORREZIONE ---
-            // Rimosso Platform.runLater(). Il codice viene eseguito immediatamente
-            // dato che 'scanner.startScanner' ci chiama già sul thread JavaFX.
+            AggiungiProdottoController controller = loader.getController();
 
-            try {
-                FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dipartimento/prova_scan/aggiungiProdotto.fxml"));
-                Parent root = loader.load();
-                AggiungiProdottoController controller = loader.getController();
+            Stage finestraAggiungi = new Stage();
+            finestraAggiungi.setTitle("Modifica prodotto");
+            finestraAggiungi.setScene(new Scene(root));
+            finestraAggiungi.initOwner(mainStage);
+            finestraAggiungi.initModality(Modality.APPLICATION_MODAL);
 
-                Stage finestraAggiungi = new Stage();
-                finestraAggiungi.setTitle("Aggiungi prodotto");
-                finestraAggiungi.setScene(new Scene(root));
+            controller.initializeWithProduct(prodotto);
 
-                finestraAggiungi.initOwner(mainStage);
-                finestraAggiungi.initModality(Modality.APPLICATION_MODAL);
+            finestraAggiungi.showAndWait();
+            aggiornaTabella();
 
-                controller.initializeWithBarcode(codice);
-
-                finestraAggiungi.showAndWait();
-
-                // DOPO che la finestra è stata chiusa, aggiorna la tabella
-                aggiornaTabella();
-
-            } catch (IOException e) {
-                e.printStackTrace();
-                mostraMessaggio("Errore nell'apertura della finestra Aggiungi");
-            }
-            // --- FINE CORREZIONE ---
-        });
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostraMessaggio("Errore", "Errore nell'apertura della finestra di modifica");
+        }
     }
 
-    private void mostraMessaggio(String msg) {
+    @FXML
+    public void apriFinestraAggiungi() {
+        // (invariato)
+        try {
+            Stage mainStage = (Stage) tabellaProdotti.getScene().getWindow();
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dipartimento/prova_scan/aggiungiProdotto.fxml"));
+            Parent root = loader.load();
+            AggiungiProdottoController controller = loader.getController();
+
+            Stage finestraAggiungi = new Stage();
+            finestraAggiungi.setTitle("Aggiungi prodotto");
+            finestraAggiungi.setScene(new Scene(root));
+
+            finestraAggiungi.initOwner(mainStage);
+            finestraAggiungi.initModality(Modality.APPLICATION_MODAL);
+
+            finestraAggiungi.showAndWait();
+            aggiornaTabella();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            mostraMessaggio("Errore", "Errore nell'apertura della finestra Aggiungi");
+        }
+    }
+
+    private void mostraMessaggio(String titolo, String messaggio) {
+        // (invariato)
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Info prodotto");
+        alert.setTitle(titolo);
         alert.setHeaderText(null);
-        alert.setContentText(msg);
+        alert.setContentText(messaggio);
         alert.showAndWait();
     }
 }

@@ -60,5 +60,4 @@ public class NotificheManager {
         }
     }
 
-    // (Metodo helper rimosso, ora è in SimpleCompositor)
 }

@@ -9,12 +9,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
-/**
- * --- PATTERN BUILDER (Director) ---
- * Questa classe (in particolare il metodo 'salvaProdotto')
- * agisce come "Director". Orchestra la costruzione di un Prodotto
- * utilizzando un'istanza di ProdottoBuilder.
- */
 public class AggiungiProdottoController {
 
     @FXML private TextField campoNome, campoMarca, campoCategoria, campoBarcode;
@@ -28,13 +22,11 @@ public class AggiungiProdottoController {
 
     private Prodotto prodottoDaModificare = null;
 
-    // Usa il Singleton
     private DatabaseManager db = DatabaseManager.getInstance();
 
     @FXML
     public void initialize() {
-        // (Logica invariata...)
-        campoQuantità.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 99, 1));
+        campoQuantità.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 999, 1));
 
         btnScanDate.setOnAction(e -> {
             Stage currentStage = (Stage) btnScanDate.getScene().getWindow();
@@ -45,13 +37,16 @@ public class AggiungiProdottoController {
                     try {
                         LocalDate parsedDate;
 
-                        if (scannedDate.length() == 10) {
+                        if (scannedDate.length() == 10) { // Formato GG/MM/AAAA
                             parsedDate = LocalDate.parse(scannedDate, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                        } else if (scannedDate.length() == 8) {
+
+                        } else if (scannedDate.length() == 8) { // Formato GG/MM/AA
                             parsedDate = LocalDate.parse(scannedDate, DateTimeFormatter.ofPattern("dd/MM/yy"));
+
                         } else {
                             throw new java.time.format.DateTimeParseException("Formato non riconosciuto", scannedDate, 0);
                         }
+
                         dataScadenza.setValue(parsedDate);
 
                     } catch (Exception ex) {
@@ -65,7 +60,6 @@ public class AggiungiProdottoController {
 
     @FXML
     private void scansionaEInserisciBarcode() {
-        // (Logica invariata...)
         Stage currentStage = (Stage) btnScanBarcode.getScene().getWindow();
         BarcodeScanner scanner = new BarcodeScanner();
 
@@ -79,10 +73,8 @@ public class AggiungiProdottoController {
         });
     }
 
-
     @FXML
     private void cercaInfoBarcode() {
-        // (Logica invariata...)
         String barcode = campoBarcode.getText();
         if (barcode == null || barcode.isEmpty()) {
             mostraAlert("Barcode mancante", "Inserisci un codice a barre per cercare.");
@@ -105,35 +97,28 @@ public class AggiungiProdottoController {
 
 
     public void initializeWithProduct(Prodotto prodotto) {
-        // (Logica invariata...)
         this.prodottoDaModificare = prodotto;
         precompilaCampiEsistenti(prodotto);
 
-        campoBarcode.setEditable(false);
-        btnScanBarcode.setDisable(true);
-        btnSearchBarcode.setDisable(true);
+        campoBarcode.setEditable(true);
+        btnScanBarcode.setDisable(false);
+        btnSearchBarcode.setDisable(false);
     }
 
-
     private void precompilaCampiDaApi(OpenFootFactsAPI.ProdottoInfo info) {
-        // (Logica invariata...)
         campoNome.setText(info.nome);
         campoMarca.setText(info.marca);
         campoCategoria.setText(info.categoria);
         campoBarcode.setText(info.barcode);
     }
 
-
     private void precompilaCampiDaProdottoLocale(Prodotto p) {
-        // (Logica invariata...)
         campoNome.setText(p.getNome());
         campoMarca.setText(p.getMarca());
         campoCategoria.setText(p.getCategoria());
     }
 
-
     private void precompilaCampiEsistenti(Prodotto p) {
-        // (Logica invariata...)
         campoNome.setText(p.getNome());
         campoMarca.setText(p.getMarca());
         campoCategoria.setText(p.getCategoria());
@@ -142,10 +127,6 @@ public class AggiungiProdottoController {
         campoQuantità.getValueFactory().setValue(p.getQuantità());
     }
 
-    /**
-     * Salva il prodotto (logica di aggiunta/modifica/duplicati)
-     * Questo metodo agisce da DIRECTOR.
-     */
     @FXML
     private void salvaProdotto() {
         String nome = campoNome.getText();
@@ -153,39 +134,54 @@ public class AggiungiProdottoController {
         String categoria = campoCategoria.getText();
         String barcode = campoBarcode.getText();
         LocalDate scadenza = dataScadenza.getValue();
-        int quantitàAggiunta = campoQuantità.getValue();
+        int quantitàInserita = campoQuantità.getValue();
 
         if (nome.isEmpty() || scadenza == null) {
             mostraAlert("Campi obbligatori mancanti", "Inserisci almeno nome e data di scadenza");
             return;
         }
 
+        List<Prodotto> prodottiEsistenti = db.getProdotti();
 
         if (prodottoDaModificare != null) {
             // --- Siamo in MODALITÀ MODIFICA ---
+            Prodotto match = null;
 
-            // --- INIZIO PATTERN BUILDER (Director) ---
-            // 1. Crea il builder
-            ProdottoBuilder builder = new ProdottoBuilderConcreto();
+            for (Prodotto p : prodottiEsistenti) {
+                if (p.getId() == prodottoDaModificare.getId()) continue; // Salta se stesso
 
-            // 2. Orchestra la costruzione (passi)
-            builder.buildId(prodottoDaModificare.getId()); // ID esistente
-            builder.buildNome(nome);
-            builder.buildMarca(marca);
-            builder.buildCategoria(categoria);
-            builder.buildBarcode(barcode);
-            builder.buildDataScadenza(scadenza);
-            builder.buildQuantità(quantitàAggiunta);
+                boolean barcodeMatch = !barcode.isEmpty() && barcode.equals(p.getBarcode()) && scadenza.equals(p.getDataScadenza());
+                boolean nameMatch = !nome.isEmpty() && nome.equals(p.getNome()) && scadenza.equals(p.getDataScadenza());
 
-            // 3. Ottieni il prodotto finito
-            Prodotto p = builder.getProdotto();
-            // --- FINE PATTERN BUILDER ---
+                if (barcodeMatch || nameMatch) {
+                    match = p;
+                    break;
+                }
+            }
 
-            db.aggiornaProdotto(p);
+            if (match != null) {
+                // Caso: Modifica che porta a un duplicato -> Unisci ed elimina vecchio
+                int nuovaQuantitàTotale = match.getQuantità() + quantitàInserita;
+                match.setQuantità(nuovaQuantitàTotale);
+
+                db.aggiornaProdotto(match);
+                db.eliminaProdotto(prodottoDaModificare.getId());
+
+                mostraInfo("Prodotti Uniti", "Il prodotto modificato è stato unito a uno già esistente con la stessa scadenza.\nNuova quantità totale: " + nuovaQuantitàTotale);
+            } else {
+                // Caso: Modifica normale (NESSUN duplicato)
+                Prodotto p = new Prodotto(
+                        prodottoDaModificare.getId(),
+                        nome, marca, categoria, barcode, scadenza, quantitàInserita
+                );
+                db.aggiornaProdotto(p);
+
+                // --- MODIFICA QUI ---
+                mostraInfo("Modifica Completata", "Il prodotto è stato aggiornato con successo.");
+            }
 
         } else {
             // --- Siamo in MODALITÀ AGGIUNGI ---
-            List<Prodotto> prodottiEsistenti = db.getProdotti();
             Prodotto match = null;
 
             for (Prodotto p : prodottiEsistenti) {
@@ -199,28 +195,20 @@ public class AggiungiProdottoController {
             }
 
             if (match != null) {
-                // Trovato! Aggiorna la quantità di quello esistente.
-                int nuovaQuantità = match.getQuantità() + quantitàAggiunta;
-                match.setQuantità(nuovaQuantità);
+                // Caso: Aggiunta di un duplicato -> Unisci
+                int nuovaQuantitàTotale = match.getQuantità() + quantitàInserita;
+                match.setQuantità(nuovaQuantitàTotale);
                 db.aggiornaProdotto(match);
+
+                mostraInfo("Prodotto Unito", "Questo prodotto esisteva già in inventario.\nLa quantità è stata aggiornata.\nNuova quantità totale: " + nuovaQuantitàTotale);
+
             } else {
-                // Non trovato. Aggiungi come nuovo.
-
-                // --- INIZIO PATTERN BUILDER (Director) ---
-                ProdottoBuilder builder = new ProdottoBuilderConcreto();
-
-                // Orchestra la costruzione (l'ID è 0 di default)
-                builder.buildNome(nome);
-                builder.buildDataScadenza(scadenza);
-                builder.buildQuantità(quantitàAggiunta);
-                builder.buildMarca(marca);
-                builder.buildCategoria(categoria);
-                builder.buildBarcode(barcode);
-
-                Prodotto p = builder.getProdotto();
-                // --- FINE PATTERN BUILDER ---
-
+                // Caso: Nuovo prodotto (NESSUN duplicato)
+                Prodotto p = new Prodotto(0, nome, marca, categoria, barcode, scadenza, quantitàInserita);
                 db.aggiungiProdotto(p);
+
+                // --- MODIFICA QUI ---
+                mostraInfo("Aggiunta Completata", "Il nuovo prodotto è stato inserito correttamente.");
             }
         }
 
@@ -229,8 +217,15 @@ public class AggiungiProdottoController {
     }
 
     private void mostraAlert(String titolo, String messaggio) {
-        // (Logica invariata...)
         Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle(titolo);
+        alert.setHeaderText(null);
+        alert.setContentText(messaggio);
+        alert.showAndWait();
+    }
+
+    private void mostraInfo(String titolo, String messaggio) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(titolo);
         alert.setHeaderText(null);
         alert.setContentText(messaggio);

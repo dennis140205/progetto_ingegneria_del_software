@@ -9,28 +9,20 @@ import java.util.Properties;
 public class EmailManager {
 
     public static void inviaEmailScadenza(String messaggioProdotti) {
-        // --- INIZIO MODIFICA ---
-        // 1. Ottieni le proprietà SMTP (host, auth, etc.)
+        // 1. Carica le proprietà interne (che ora includono anche user/pass)
         Properties smtpProps = ConfigManager.getSmtpProperties();
 
-        // 2. Ottieni le credenziali e il destinatario dal file di config utente
-        Properties userProps = ConfigManager.getUserProperties();
-        final String username = userProps.getProperty("mail.username");
-        final String password = userProps.getProperty("mail.password");
-        final String toEmail = userProps.getProperty("mail.to");
-        // --- FINE MODIFICA ---
+        // 2. Ottieni l'email del destinatario (quella rimane scelta dall'utente)
+        final String toEmail = ConfigManager.getUserEmail();
+
+        // --- MODIFICA: Prendi le credenziali dal file interno ---
+        final String username = smtpProps.getProperty("mail.username");
+        final String password = smtpProps.getProperty("mail.password");
+        // --------------------------------------------------------
 
         // Controllo di sicurezza
         if (toEmail == null || toEmail.isEmpty() || !toEmail.contains("@")) {
-            System.err.println("Invio email fallito: 'mail.to' non è impostata. (Impostala dal programma)");
-            return;
-        }
-        if (username == null || username.isEmpty() || !username.contains("@")) {
-            System.err.println("Invio email fallito: 'mail.username' (mittente) non è impostato.");
-            return;
-        }
-        if (password == null || password.isEmpty()) {
-            System.err.println("Invio email fallito: 'mail.password' (password app) non è impostata.");
+            System.err.println("Invio email fallito: 'Email Destinatario' non è impostata.");
             return;
         }
 

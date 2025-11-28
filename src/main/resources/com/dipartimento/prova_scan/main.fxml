@@ -10,16 +10,10 @@
             <Button text="Aggiungi Prodotto" onAction="#apriFinestraAggiungi"/>
             <Separator orientation="VERTICAL" />
 
-            <Label text="Email Mittente:"/>
-            <TextField fx:id="campoEmailMittente" promptText="la.tua.email@gmail.com" prefWidth="150"/>
+            <Label text="Invia notifiche a:"/>
+            <TextField fx:id="campoEmailNotifiche" promptText="tua.email@esempio.com" prefWidth="200"/>
 
-            <Label text="Password App:"/>
-            <PasswordField fx:id="campoPasswordApp" promptText="password 16 cifre" prefWidth="120"/>
-
-            <Label text="Email Destinatario:"/>
-            <TextField fx:id="campoEmailNotifiche" promptText="email.ricevente@esempio.com" prefWidth="150"/>
-
-            <Button fx:id="btnSalvaEmail" text="Salva Impostazioni" onAction="#salvaImpostazioniEmail"/>
+            <Button text="Salva Email" onAction="#salvaImpostazioniEmail"/>
         </ToolBar>
     </top>
     <center>

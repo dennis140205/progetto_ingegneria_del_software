@@ -21,17 +21,14 @@ public class MainController {
     @FXML private TableColumn<Prodotto, LocalDate> colScadenza;
     @FXML private TableColumn<Prodotto, Integer> colQuantità;
 
-    @FXML private TextField campoEmailMittente;
-    @FXML private PasswordField campoPasswordApp;
+    // Campo unico per l'email del destinatario (le altre sono fisse/hardcoded)
     @FXML private TextField campoEmailNotifiche;
 
-    // --- MODIFICA SINGLETON ---
-    // Ottiene l'unica istanza del DatabaseManager invece di crearne una nuova.
     private DatabaseManager db = DatabaseManager.getInstance();
-    // --- FINE MODIFICA ---
 
     @FXML
     public void initialize() {
+        // Setup colonne
         colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
         colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
         colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
@@ -42,13 +39,11 @@ public class MainController {
         aggiornaTabella();
         NotificheManager.controllaScadenze(db.getProdotti());
 
-        // Carica tutte le impostazioni salvate all'avvio
+        // Carica solo la mail destinatario salvata
         Properties userProps = ConfigManager.getUserProperties();
-        campoEmailMittente.setText(userProps.getProperty("mail.username", ""));
-        campoPasswordApp.setText(userProps.getProperty("mail.password", ""));
         campoEmailNotifiche.setText(userProps.getProperty("mail.to", ""));
 
-        // (Logica RowFactory invariata...)
+        // RowFactory per Colori e Menu Contestuale
         tabellaProdotti.setRowFactory(tv -> {
             TableRow<Prodotto> row = new TableRow<>() {
                 @Override
@@ -58,13 +53,25 @@ public class MainController {
                         setStyle("");
                     } else {
                         LocalDate oggi = LocalDate.now();
-                        if (p.getDataScadenza().isBefore(oggi)) setStyle("-fx-background-color: #ffb3b3;");
-                        else if (p.getDataScadenza().isBefore(oggi.plusDays(3))) setStyle("-fx-background-color: #fff1b3;");
-                        else setStyle("");
+
+                        // --- COLORI MODERNI (PASTELLO) ---
+                        if (p.getDataScadenza().isBefore(oggi)) {
+                            // Rosso pastello (Scaduto)
+                            setStyle("-fx-background-color: #ffcccc; -fx-border-color: #e74c3c; -fx-border-width: 0 0 0 5;");
+                        }
+                        else if (p.getDataScadenza().isBefore(oggi.plusDays(3))) {
+                            // Giallo pastello (In scadenza)
+                            setStyle("-fx-background-color: #fff5cc; -fx-border-color: #f1c40f; -fx-border-width: 0 0 0 5;");
+                        }
+                        else {
+                            // Normale (stile del CSS)
+                            setStyle("");
+                        }
                     }
                 }
             };
 
+            // Menu Contestuale (Tasto Destro)
             final MenuItem modificaMenuItem = new MenuItem("Modifica");
             modificaMenuItem.setOnAction(event -> {
                 Prodotto prodottoDaModificare = row.getItem();
@@ -101,42 +108,40 @@ public class MainController {
 
     @FXML
     private void salvaImpostazioniEmail() {
-        // (Logica invariata...)
-        String mittente = campoEmailMittente.getText();
-        String password = campoPasswordApp.getText();
         String destinatario = campoEmailNotifiche.getText();
 
-        if (mittente.isEmpty() || !mittente.contains("@") ||
-                password.isEmpty() ||
-                destinatario.isEmpty() || !destinatario.contains("@")) {
-
-            mostraMessaggio("Campi incompleti", "Inserisci email mittente, password app e email destinatario validi.");
+        if (destinatario.isEmpty() || !destinatario.contains("@")) {
+            mostraMessaggio("Email non valida", "Inserisci un'email destinatario valida.");
             return;
         }
 
-        ConfigManager.saveUserSettings(mittente, password, destinatario);
-        mostraMessaggio("Impostazioni Salvare", "Le tue credenziali email sono state salvate in modo sicuro sul tuo computer.");
+        // Salva solo il destinatario nel file utente
+        ConfigManager.saveUserEmail(destinatario);
+
+        mostraMessaggio("Email Salvata", "Riceverai le notifiche a: " + destinatario);
     }
 
     private void aggiornaTabella() {
-        // (Logica invariata...)
         List<Prodotto> prodotti = db.getProdotti();
         tabellaProdotti.getItems().setAll(prodotti);
     }
 
     private void apriFinestraModifica(Prodotto prodotto) {
-        // (Logica invariata...)
         try {
             Stage mainStage = (Stage) tabellaProdotti.getScene().getWindow();
-
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dipartimento/prova_scan/aggiungiProdotto.fxml"));
             Parent root = loader.load();
-
             AggiungiProdottoController controller = loader.getController();
 
             Stage finestraAggiungi = new Stage();
             finestraAggiungi.setTitle("Modifica prodotto");
-            finestraAggiungi.setScene(new Scene(root));
+
+            // --- STILE & DIMENSIONI ---
+            Scene scene = new Scene(root, 500, 650);
+            scene.getStylesheets().add(getClass().getResource("/com/dipartimento/prova_scan/style.css").toExternalForm());
+            finestraAggiungi.setScene(scene);
+            // --------------------------
+
             finestraAggiungi.initOwner(mainStage);
             finestraAggiungi.initModality(Modality.APPLICATION_MODAL);
 
@@ -153,17 +158,19 @@ public class MainController {
 
     @FXML
     public void apriFinestraAggiungi() {
-        // (Logica invariata...)
         try {
             Stage mainStage = (Stage) tabellaProdotti.getScene().getWindow();
-
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dipartimento/prova_scan/aggiungiProdotto.fxml"));
             Parent root = loader.load();
-            AggiungiProdottoController controller = loader.getController();
 
             Stage finestraAggiungi = new Stage();
             finestraAggiungi.setTitle("Aggiungi prodotto");
-            finestraAggiungi.setScene(new Scene(root));
+
+            // --- STILE & DIMENSIONI ---
+            Scene scene = new Scene(root, 500, 650);
+            scene.getStylesheets().add(getClass().getResource("/com/dipartimento/prova_scan/style.css").toExternalForm());
+            finestraAggiungi.setScene(scene);
+            // --------------------------
 
             finestraAggiungi.initOwner(mainStage);
             finestraAggiungi.initModality(Modality.APPLICATION_MODAL);
@@ -178,7 +185,6 @@ public class MainController {
     }
 
     private void mostraMessaggio(String titolo, String messaggio) {
-        // (Logica invariata...)
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(titolo);
         alert.setHeaderText(null);

@@ -90,7 +90,7 @@ public class AggiungiProdottoController {
             if (info != null) {
                 precompilaCampiDaApi(info);
             } else {
-                mostraAlert("Info non trovate", "Barcode non trovato né nel DB locale né online. Puoi inserire i dati manualmente.");
+                mostraAlert("Info non trovate", "Barcode non trovato né localmente né online. Puoi inserire i dati manualmente.");
             }
         }
     }
@@ -200,7 +200,7 @@ public class AggiungiProdottoController {
                 match.setQuantità(nuovaQuantitàTotale);
                 db.aggiornaProdotto(match);
 
-                mostraInfo("Prodotto Unito", "Questo prodotto esisteva già in inventario.\nLa quantità è stata aggiornata.\nNuova quantità totale: " + nuovaQuantitàTotale);
+                mostraInfo("Prodotto aggregato", "Questo prodotto esisteva già in inventario.\nLa quantità è stata aggiornata.\nNuova quantità totale: " + nuovaQuantitàTotale);
 
             } else {
                 // Caso: Nuovo prodotto (NESSUN duplicato)

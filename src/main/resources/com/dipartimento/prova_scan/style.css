@@ -11,6 +11,12 @@
     -fx-font-weight: bold;
 }
 
+/* --- DATE PICKER POPUP (Il Calendario aperto) --- */
+.date-picker-popup .month-year-pane .spinner .button .left-arrow,
+.date-picker-popup .month-year-pane .spinner .button .right-arrow {
+    -fx-background-color: white; /* Rende le freccette bianche */
+}
+
 /* --- Campi di Testo, DatePicker, Spinner --- */
 .text-field, .date-picker, .spinner {
     -fx-background-color: white;

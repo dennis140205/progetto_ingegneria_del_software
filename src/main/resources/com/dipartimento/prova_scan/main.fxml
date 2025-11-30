@@ -11,20 +11,24 @@
             <Separator orientation="VERTICAL" />
 
             <Label text="Invia notifiche a:"/>
-            <TextField fx:id="campoEmailNotifiche" promptText="tua.email@esempio.com" prefWidth="200"/>
+            <HBox HBox.hgrow="ALWAYS" alignment="CENTER_LEFT">
+                <TextField fx:id="campoEmailNotifiche" promptText="tua.email@esempio.com" HBox.hgrow="ALWAYS" maxWidth="Infinity"/>
+            </HBox>
 
             <Button text="Salva Email" onAction="#salvaImpostazioniEmail"/>
         </ToolBar>
     </top>
     <center>
         <TableView fx:id="tabellaProdotti">
+            <columnResizePolicy>
+                <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+            </columnResizePolicy>
             <columns>
-                <TableColumn fx:id="colNome" text="Nome" prefWidth="150"/>
-                <TableColumn fx:id="colMarca" text="Marca" prefWidth="100"/>
-                <TableColumn fx:id="colCategoria" text="Categoria" prefWidth="100"/>
-                <TableColumn fx:id="colBarcode" text="Barcode" prefWidth="120"/>
-                <TableColumn fx:id="colScadenza" text="Scadenza" prefWidth="100"/>
-                <TableColumn fx:id="colQuantità" text="Quantità" prefWidth="80"/>
+                <TableColumn fx:id="colNome" text="Nome" /> <TableColumn fx:id="colMarca" text="Marca" />
+                <TableColumn fx:id="colCategoria" text="Categoria" />
+                <TableColumn fx:id="colBarcode" text="Barcode" />
+                <TableColumn fx:id="colScadenza" text="Scadenza" />
+                <TableColumn fx:id="colQuantità" text="Quantità" />
             </columns>
         </TableView>
     </center>

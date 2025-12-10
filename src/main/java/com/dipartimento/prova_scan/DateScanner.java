@@ -8,30 +8,30 @@ import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import net.sourceforge.tess4j.Tesseract;
+import net.sourceforge.tess4j.TesseractException;
 
 import java.awt.Dimension;
 import java.awt.image.BufferedImage;
 import java.util.Arrays;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class DateScanner {
     private volatile boolean running = true;
+
+    // Flag per evitare di lanciare troppi processi OCR insieme
+    private final AtomicBoolean isProcessingOCR = new AtomicBoolean(false);
+
     private String resultText = null;
 
-    /**
-     * Avvia lo scanner OCR per la data.
-     * @param parentStage La finestra "proprietaria" (es. AggiungiProdotto) che verrà bloccata.
-     * @param onDateFound Il Consumer che riceverà la data (o null se annullato).
-     */
     public void start(Stage parentStage, Consumer<String> onDateFound) {
         Stage stage = new Stage();
         stage.setTitle("Scansione Data Scadenza");
-
         stage.initOwner(parentStage);
         stage.initModality(Modality.APPLICATION_MODAL);
 
@@ -40,103 +40,94 @@ public class DateScanner {
         imageView.setFitWidth(800);
         imageView.setFitHeight(600);
 
-        // --- MODIFICATO ---
-        Label overlay = new Label("Inquadra la data (GG/MM/AAAA o GG/MM/AA)");
+        // 1. EFFETTO SPECCHIO
+        imageView.setScaleX(-1);
+
+        Label overlay = new Label("Inquadra la data");
         overlay.setStyle("-fx-background-color: rgba(0,0,0,0.5); -fx-text-fill: white; -fx-padding: 8; -fx-font-size: 16px;");
-        // --- FINE MODIFICA ---
 
-        Rectangle focusRect = new Rectangle(400, 150);
-        focusRect.setStroke(Color.RED);
-        focusRect.setStrokeWidth(3);
-        focusRect.setFill(Color.TRANSPARENT);
-
-        StackPane root = new StackPane(imageView, focusRect, overlay);
+        StackPane root = new StackPane(imageView, overlay);
         StackPane.setAlignment(overlay, Pos.TOP_CENTER);
+
         Scene scene = new Scene(root, 800, 600);
         stage.setScene(scene);
-        stage.setResizable(true);
         stage.show();
 
+        // Thread Principale: Gestisce SOLO la Webcam (Fluidità massima)
         new Thread(() -> {
             Webcam webcam = Webcam.getDefault();
             if (webcam == null) {
-                System.err.println("Nessuna webcam trovata!");
+                Platform.runLater(() -> overlay.setText("Nessuna webcam trovata!"));
                 return;
             }
 
+            // Risoluzione media per bilanciare velocità OCR e qualità video
             Dimension[] sizes = webcam.getViewSizes();
             Dimension best = Arrays.stream(sizes)
                     .max((d1,d2) -> Integer.compare(d1.width*d1.height, d2.width*d2.height))
                     .orElse(new Dimension(640,480));
             webcam.setViewSize(best);
-            webcam.open();
 
+            if (!webcam.open()) return;
+
+            // Configurazione Tesseract (fuori dal loop)
             Tesseract tess = new Tesseract();
             tess.setDatapath("tessdata");
             tess.setLanguage("ita");
-            tess.setTessVariable("tessedit_char_whitelist", "0123456789/");
+            // Whitelist: ammettiamo numeri, /, -, . e spazi
+            tess.setTessVariable("tessedit_char_whitelist", "0123456789/-. ");
+
+            Pattern datePattern = Pattern.compile("(\\d{2}[/.-]\\d{2}[/.-]\\d{2,4})");
 
             while (running && resultText == null) {
+                // 1. Cattura Immagine
                 BufferedImage frame = webcam.getImage();
+
                 if (frame != null) {
+                    // 2. Aggiorna Video (IMMEDIATO)
+                    Platform.runLater(() -> imageView.setImage(SwingFXUtils.toFXImage(frame, null)));
 
-                    int rectWidth = frame.getWidth()/2;
-                    int rectHeight = frame.getHeight()/3;
-                    int startX = frame.getWidth()/4;
-                    int startY = frame.getHeight()/3;
+                    // 3. Lancia OCR in Background (SOLO SE non sta già lavorando)
+                    if (!isProcessingOCR.get()) {
+                        isProcessingOCR.set(true); // Occupiamo il "semaforo"
 
-                    BufferedImage cropped;
-                    try {
-                        cropped = frame.getSubimage(startX, startY, rectWidth, rectHeight);
-                    } catch (Exception e) {
-                        System.err.println("Errore ritaglio: " + e.getMessage());
-                        continue;
-                    }
+                        // Creiamo un thread usa-e-getta per l'analisi di QUESTO frame
+                        new Thread(() -> {
+                            try {
+                                // Analizziamo l'immagine originale (NON specchiata)
+                                String ocrResult = tess.doOCR(frame);
 
-                    Platform.runLater(() -> imageView.setImage(SwingFXUtils.toFXImage(cropped, null)));
+                                // Pulizia risultato
+                                ocrResult = ocrResult.replaceAll("\n", " ").replaceAll("\\s+", "");
 
-                    try {
-                        String ocr = tess.doOCR(cropped)
-                                .replace("\n", " ")
-                                .replaceAll("\\s+", "");
+                                Matcher matcher = datePattern.matcher(ocrResult);
+                                if (matcher.find()) {
+                                    resultText = matcher.group(1);
+                                    running = false; // Ferma il loop principale
 
-                        // --- MODIFICATO ---
-                        // Cerca il pattern GG/MM/AAAA oppure GG/MM/AA
-                        // (Diamo priorità al formato a 4 cifre)
-                        java.util.regex.Pattern pattern = java.util.regex.Pattern.compile("(\\d{2}/\\d{2}/\\d{4}|\\d{2}/\\d{2}/\\d{2})");
-                        // --- FINE MODIFICA ---
-
-                        java.util.regex.Matcher matcher = pattern.matcher(ocr);
-
-                        if (matcher.find()) {
-                            resultText = matcher.group(1); // Data trovata!
-                            running = false;
-
-                            Platform.runLater(() -> {
-                                overlay.setText("Data rilevata: " + resultText);
-                                stage.close();
-                            });
-                        }
-                    } catch (Exception e) {
-                        // Ignora errori OCR
+                                    Platform.runLater(() -> {
+                                        overlay.setText("Data rilevata: " + resultText);
+                                        stage.close();
+                                    });
+                                }
+                            } catch (TesseractException e) {
+                                // Ignora errori OCR
+                            } finally {
+                                // Finito il lavoro, liberiamo il semaforo per il prossimo frame disponibile
+                                isProcessingOCR.set(false);
+                            }
+                        }).start();
                     }
                 }
-                try {
-                    Thread.sleep(250); // Pausa per non sovraccaricare la CPU
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+
+                // Piccola pausa per la webcam (standard 30 fps circa)
+                try { Thread.sleep(30); } catch (Exception e) {}
             }
 
             webcam.close();
         }).start();
 
-        stage.setOnHidden(e -> {
-            onDateFound.accept(resultText); // Invia il risultato (data o null)
-        });
-
-        stage.setOnCloseRequest(e -> {
-            running = false; // Ferma il thread
-        });
+        stage.setOnCloseRequest(e -> running = false);
+        stage.setOnHidden(e -> onDateFound.accept(resultText));
     }
 }

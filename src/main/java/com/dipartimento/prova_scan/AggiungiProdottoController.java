@@ -42,12 +42,8 @@ public class AggiungiProdottoController {
                         }
                         dataScadenza.setValue(parsedDate);
                     } catch (Exception ex) {
-                        System.err.println("Formato data non valido: " + scannedDate);
-                        // Titolo finestra vs Intestazione interna
-                        mostraAlert(Alert.AlertType.WARNING,
-                                "Errore di Formato",
-                                "Data non riconosciuta",
-                                "Impossibile analizzare la data: " + scannedDate + ". Usare GG/MM/AAAA.");
+                        System.err.println("Data non valida: " + scannedDate);
+                        mostraAlert(Alert.AlertType.WARNING, "Errore Data", "Data non riconosciuta.");
                     }
                 }
             });
@@ -72,10 +68,7 @@ public class AggiungiProdottoController {
     private void cercaInfoBarcode() {
         String barcode = campoBarcode.getText();
         if (barcode == null || barcode.isEmpty()) {
-            mostraAlert(Alert.AlertType.WARNING,
-                    "Campo vuoto",
-                    "Barcode mancante",
-                    "Inserisci un codice a barre per cercare.");
+            mostraAlert(Alert.AlertType.WARNING, "Attenzione", "Inserisci o scansiona un barcode.");
             return;
         }
 
@@ -87,10 +80,7 @@ public class AggiungiProdottoController {
             if (info != null) {
                 precompilaCampiDaApi(info);
             } else {
-                mostraAlert(Alert.AlertType.INFORMATION,
-                        "Risultato Ricerca",
-                        "Prodotto non trovato",
-                        "Barcode non trovato né localmente né online. Inserisci i dati manualmente.");
+                mostraAlert(Alert.AlertType.INFORMATION, "Info", "Prodotto non trovato. Inserisci i dati manualmente.");
             }
         }
     }
@@ -98,8 +88,6 @@ public class AggiungiProdottoController {
     public void initializeWithProduct(Prodotto prodotto) {
         this.prodottoDaModificare = prodotto;
         precompilaCampiEsistenti(prodotto);
-
-        // In modifica blocchiamo il barcode
         campoBarcode.setEditable(false);
         campoBarcode.setDisable(true);
         btnScanBarcode.setDisable(true);
@@ -138,17 +126,23 @@ public class AggiungiProdottoController {
         int quantitàInserita = campoQuantita.getValue();
 
         if (nome.isEmpty() || scadenza == null) {
-            mostraAlert(Alert.AlertType.WARNING,
-                    "Validazione",
-                    "Dati obbligatori mancanti",
-                    "Inserisci almeno il Nome e la Data di Scadenza.");
+            mostraAlert(Alert.AlertType.WARNING, "Dati Mancanti", "Nome e Data Scadenza sono obbligatori.");
             return;
         }
 
         List<Prodotto> prodottiEsistenti = db.getProdotti();
 
+        // --- PATTERN BUILDER: Inizializzazione ---
+        CostruttoreProdotto builder = new CostruttoreProdottoStandard();
+        builder.impostaNome(nome);
+        builder.impostaMarca(marca);
+        builder.impostaCategoria(categoria);
+        builder.impostaBarcode(barcode);
+        builder.impostaScadenza(scadenza);
+        builder.impostaQuantita(quantitàInserita);
+        // ------------------------------------------
+
         if (prodottoDaModificare != null) {
-            // --- MODIFICA ---
             Prodotto match = null;
             for (Prodotto p : prodottiEsistenti) {
                 if (p.getId() == prodottoDaModificare.getId()) continue;
@@ -165,23 +159,18 @@ public class AggiungiProdottoController {
                 match.setQuantità(nuovaQuantitàTotale);
                 db.aggiornaProdotto(match);
                 db.eliminaProdotto(prodottoDaModificare.getId());
-
-                mostraAlert(Alert.AlertType.INFORMATION,
-                        "Gestione Inventario",
-                        "Prodotti Uniti",
-                        "Il prodotto è stato unito a uno esistente.\nNuova quantità totale: " + nuovaQuantitàTotale);
+                mostraAlert(Alert.AlertType.INFORMATION, "Unione Prodotti", "Prodotto unito a uno esistente.\nNuova quantità: " + nuovaQuantitàTotale);
             } else {
-                Prodotto p = new Prodotto(prodottoDaModificare.getId(), nome, marca, categoria, barcode, scadenza, quantitàInserita);
-                db.aggiornaProdotto(p);
+                // --- USO DEL BUILDER PER LA MODIFICA ---
+                builder.impostaId(prodottoDaModificare.getId());
+                Prodotto p = builder.costruisci();
+                // ---------------------------------------
 
-                mostraAlert(Alert.AlertType.INFORMATION,
-                        "Gestione Inventario",
-                        "Modifica Completata",
-                        "Il prodotto è stato aggiornato con successo.");
+                db.aggiornaProdotto(p);
+                mostraAlert(Alert.AlertType.INFORMATION, "Modifica Completata", "Il prodotto è stato aggiornato.");
             }
 
         } else {
-            // --- AGGIUNTA ---
             Prodotto match = null;
             for (Prodotto p : prodottiEsistenti) {
                 boolean barcodeMatch = !barcode.isEmpty() && barcode.equals(p.getBarcode()) && scadenza.equals(p.getDataScadenza());
@@ -196,19 +185,15 @@ public class AggiungiProdottoController {
                 int nuovaQuantitàTotale = match.getQuantità() + quantitàInserita;
                 match.setQuantità(nuovaQuantitàTotale);
                 db.aggiornaProdotto(match);
-
-                mostraAlert(Alert.AlertType.INFORMATION,
-                        "Gestione Inventario",
-                        "Prodotto Aggregato",
-                        "Prodotto già presente. Quantità aggiornata a: " + nuovaQuantitàTotale);
+                mostraAlert(Alert.AlertType.INFORMATION, "Prodotto Aggregato", "Prodotto già presente. Quantità aggiornata a: " + nuovaQuantitàTotale);
             } else {
-                Prodotto p = new Prodotto(0, nome, marca, categoria, barcode, scadenza, quantitàInserita);
-                db.aggiungiProdotto(p);
+                // --- USO DEL BUILDER PER L'AGGIUNTA ---
+                builder.impostaId(0);
+                Prodotto p = builder.costruisci();
+                // --------------------------------------
 
-                mostraAlert(Alert.AlertType.INFORMATION,
-                        "Gestione Inventario",
-                        "Operazione Completata",
-                        "Nuovo prodotto inserito correttamente.");
+                db.aggiungiProdotto(p);
+                mostraAlert(Alert.AlertType.INFORMATION, "Operazione Completata", "Nuovo prodotto inserito.");
             }
         }
 
@@ -216,13 +201,10 @@ public class AggiungiProdottoController {
         stage.close();
     }
 
-    /**
-     * Metodo aggiornato per accettare Titolo Finestra e Header Intestazione separati.
-     */
-    private void mostraAlert(Alert.AlertType type, String titoloFinestra, String headerInterno, String messaggio) {
+    private void mostraAlert(Alert.AlertType type, String titolo, String messaggio) {
         Alert alert = new Alert(type);
-        alert.setTitle(titoloFinestra); // Titolo sulla barra della finestra
-        alert.setHeaderText(headerInterno); // Titolo dentro la finestra (area grigia)
+        alert.setTitle(titolo);
+        alert.setHeaderText(titolo);
         alert.setContentText(messaggio);
 
         DialogPane dialogPane = alert.getDialogPane();

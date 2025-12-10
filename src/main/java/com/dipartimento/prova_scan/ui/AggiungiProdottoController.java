@@ -1,5 +1,12 @@
-package com.dipartimento.prova_scan;
+package com.dipartimento.prova_scan.ui;
 
+import com.dipartimento.prova_scan.domain.CostruttoreProdotto;
+import com.dipartimento.prova_scan.domain.CostruttoreProdottoStandard;
+import com.dipartimento.prova_scan.domain.Prodotto;
+import com.dipartimento.prova_scan.services.BarcodeScanner;
+import com.dipartimento.prova_scan.services.DatabaseManager;
+import com.dipartimento.prova_scan.services.DateScanner;
+import com.dipartimento.prova_scan.services.OpenFootFactsAPI;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;

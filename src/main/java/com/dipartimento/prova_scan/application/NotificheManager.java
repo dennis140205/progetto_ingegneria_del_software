@@ -1,5 +1,9 @@
-package com.dipartimento.prova_scan;
+package com.dipartimento.prova_scan.application;
 
+import com.dipartimento.prova_scan.services.EmailManager;
+import com.dipartimento.prova_scan.domain.Prodotto;
+import com.dipartimento.prova_scan.domain.StrategiaNotifica;
+import com.dipartimento.prova_scan.domain.StrategiaNotificaTesto;
 import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.scene.layout.VBox;

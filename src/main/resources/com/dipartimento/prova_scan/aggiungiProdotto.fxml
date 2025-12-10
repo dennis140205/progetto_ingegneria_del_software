@@ -5,7 +5,7 @@
 <?import javafx.geometry.Insets?>
 
 <VBox xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.dipartimento.prova_scan.AggiungiProdottoController"
+      fx:controller="com.dipartimento.prova_scan.ui.AggiungiProdottoController"
       spacing="10" fillWidth="true">
 
     <padding>

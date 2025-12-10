@@ -1,4 +1,4 @@
-package com.dipartimento.prova_scan;
+package com.dipartimento.prova_scan.services;
 
 import org.json.JSONObject;
 import java.io.BufferedReader;

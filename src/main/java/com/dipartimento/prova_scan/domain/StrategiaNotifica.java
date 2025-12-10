@@ -1,4 +1,4 @@
-package com.dipartimento.prova_scan;
+package com.dipartimento.prova_scan.domain;
 
 import java.util.List;
 

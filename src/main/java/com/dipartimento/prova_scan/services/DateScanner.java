@@ -1,4 +1,4 @@
-package com.dipartimento.prova_scan;
+package com.dipartimento.prova_scan.services;
 
 import com.github.sarxos.webcam.Webcam;
 import javafx.application.Platform;

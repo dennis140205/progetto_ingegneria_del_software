@@ -1,4 +1,4 @@
-package com.dipartimento.prova_scan;
+package com.dipartimento.prova_scan.services;
 
 import jakarta.mail.*;
 import jakarta.mail.internet.InternetAddress;

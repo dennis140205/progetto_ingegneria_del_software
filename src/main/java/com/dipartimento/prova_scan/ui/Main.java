@@ -1,4 +1,4 @@
-package com.dipartimento.prova_scan;
+package com.dipartimento.prova_scan.ui;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;

@@ -1,4 +1,4 @@
-package com.dipartimento.prova_scan;
+package com.dipartimento.prova_scan.domain;
 
 import java.time.LocalDate;
 import java.util.List;

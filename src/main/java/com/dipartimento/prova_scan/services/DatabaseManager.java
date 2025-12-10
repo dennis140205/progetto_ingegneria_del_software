@@ -1,4 +1,6 @@
-package com.dipartimento.prova_scan;
+package com.dipartimento.prova_scan.services;
+
+import com.dipartimento.prova_scan.domain.Prodotto;
 
 import java.sql.*;
 import java.time.LocalDate;

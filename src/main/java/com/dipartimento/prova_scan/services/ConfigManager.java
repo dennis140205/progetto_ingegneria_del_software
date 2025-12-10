@@ -1,4 +1,4 @@
-package com.dipartimento.prova_scan;
+package com.dipartimento.prova_scan.services;
 
 import java.io.File;
 import java.io.FileInputStream;

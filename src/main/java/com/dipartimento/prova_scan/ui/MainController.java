@@ -1,5 +1,9 @@
-package com.dipartimento.prova_scan;
+package com.dipartimento.prova_scan.ui;
 
+import com.dipartimento.prova_scan.services.ConfigManager;
+import com.dipartimento.prova_scan.services.DatabaseManager;
+import com.dipartimento.prova_scan.application.NotificheManager;
+import com.dipartimento.prova_scan.domain.Prodotto;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;

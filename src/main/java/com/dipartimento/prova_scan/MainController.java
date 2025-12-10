@@ -20,15 +20,12 @@ public class MainController {
     @FXML private TableColumn<Prodotto, String> colNome, colMarca, colCategoria, colBarcode;
     @FXML private TableColumn<Prodotto, LocalDate> colScadenza;
     @FXML private TableColumn<Prodotto, Integer> colQuantità;
-
-    // Campo unico per l'email del destinatario (le altre sono fisse/hardcoded)
     @FXML private TextField campoEmailNotifiche;
 
     private DatabaseManager db = DatabaseManager.getInstance();
 
     @FXML
     public void initialize() {
-        // Setup colonne
         colNome.setCellValueFactory(new PropertyValueFactory<>("nome"));
         colMarca.setCellValueFactory(new PropertyValueFactory<>("marca"));
         colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
@@ -39,39 +36,26 @@ public class MainController {
         aggiornaTabella();
         NotificheManager.controllaScadenze(db.getProdotti());
 
-        // Carica solo la mail destinatario salvata
         Properties userProps = ConfigManager.getUserProperties();
         campoEmailNotifiche.setText(userProps.getProperty("mail.to", ""));
 
-        // RowFactory per Colori e Menu Contestuale
         tabellaProdotti.setRowFactory(tv -> {
             TableRow<Prodotto> row = new TableRow<>() {
                 @Override
                 protected void updateItem(Prodotto p, boolean empty) {
                     super.updateItem(p, empty);
-                    if (p == null || empty) {
-                        setStyle("");
-                    } else {
-                        LocalDate oggi = LocalDate.now();
+                    getStyleClass().removeAll("scaduto", "in-scadenza");
+                    if (p == null || empty) return;
 
-                        // --- COLORI MODERNI (PASTELLO) ---
-                        if (p.getDataScadenza().isBefore(oggi)) {
-                            // Rosso pastello (Scaduto)
-                            setStyle("-fx-background-color: #ffcccc; -fx-border-color: #e74c3c; -fx-border-width: 0 0 0 5;");
-                        }
-                        else if (p.getDataScadenza().isBefore(oggi.plusDays(3))) {
-                            // Giallo pastello (In scadenza)
-                            setStyle("-fx-background-color: #fff5cc; -fx-border-color: #f1c40f; -fx-border-width: 0 0 0 5;");
-                        }
-                        else {
-                            // Normale (stile del CSS)
-                            setStyle("");
-                        }
+                    LocalDate oggi = LocalDate.now();
+                    if (p.getDataScadenza().isBefore(oggi)) {
+                        getStyleClass().add("scaduto");
+                    } else if (p.getDataScadenza().isBefore(oggi.plusDays(3))) {
+                        getStyleClass().add("in-scadenza");
                     }
                 }
             };
 
-            // Menu Contestuale (Tasto Destro)
             final MenuItem modificaMenuItem = new MenuItem("Modifica");
             modificaMenuItem.setOnAction(event -> {
                 Prodotto prodottoDaModificare = row.getItem();
@@ -80,16 +64,19 @@ public class MainController {
 
             final MenuItem eliminaMenuItem = new MenuItem("Elimina");
             eliminaMenuItem.setOnAction(event -> {
-                Prodotto prodottoDaEliminare = row.getItem();
+                Prodotto prodotto = row.getItem();
 
                 Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-                alert.setTitle("Conferma Eliminazione");
-                alert.setHeaderText("Sei sicuro di voler eliminare il prodotto?");
-                alert.setContentText(prodottoDaEliminare.getNome() + " (Quantità: " + prodottoDaEliminare.getQuantità() + ")");
+                // --- TITOLI DIVERSI ---
+                alert.setTitle("Gestione Inventario");      // Titolo Finestra (OS)
+                alert.setHeaderText("Conferma Eliminazione"); // Intestazione Interna
+                // ---------------------
+                alert.setContentText("Vuoi davvero eliminare \"" + prodotto.getNome() + "\"?\nQuesta operazione è irreversibile.");
+                applicaStile(alert);
 
                 alert.showAndWait().ifPresent(response -> {
                     if (response == ButtonType.OK) {
-                        db.eliminaProdotto(prodottoDaEliminare.getId());
+                        db.eliminaProdotto(prodotto.getId());
                         aggiornaTabella();
                     }
                 });
@@ -98,27 +85,32 @@ public class MainController {
             final ContextMenu contextMenu = new ContextMenu();
             contextMenu.getItems().addAll(modificaMenuItem, eliminaMenuItem);
 
-            row.contextMenuProperty().bind(
-                    row.emptyProperty().map(empty -> empty ? null : contextMenu)
-            );
+            row.contextMenuProperty().bind(row.emptyProperty().map(empty -> empty ? null : contextMenu));
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && (!row.isEmpty())) {
+                    contextMenu.show(row, event.getScreenX(), event.getScreenY());
+                }
+            });
+
             return row;
         });
     }
 
-
     @FXML
     private void salvaImpostazioniEmail() {
         String destinatario = campoEmailNotifiche.getText();
-
         if (destinatario.isEmpty() || !destinatario.contains("@")) {
-            mostraMessaggio("Email non valida", "Inserisci un'email destinatario valida.");
+            mostraMessaggio(Alert.AlertType.WARNING,
+                    "Errore Validazione",
+                    "Email non valida",
+                    "Inserisci un'email destinatario valida.");
             return;
         }
-
-        // Salva solo il destinatario nel file utente
         ConfigManager.saveUserEmail(destinatario);
-
-        mostraMessaggio("Email Salvata", "Riceverai le notifiche a: " + destinatario);
+        mostraMessaggio(Alert.AlertType.INFORMATION,
+                "Configurazione",
+                "Impostazioni Salvate",
+                "Riceverai le notifiche a: " + destinatario);
     }
 
     private void aggiornaTabella() {
@@ -135,24 +127,17 @@ public class MainController {
 
             Stage finestraAggiungi = new Stage();
             finestraAggiungi.setTitle("Modifica prodotto");
-
-            // --- STILE & DIMENSIONI ---
             Scene scene = new Scene(root, 500, 650);
             scene.getStylesheets().add(getClass().getResource("/com/dipartimento/prova_scan/style.css").toExternalForm());
             finestraAggiungi.setScene(scene);
-            // --------------------------
-
             finestraAggiungi.initOwner(mainStage);
             finestraAggiungi.initModality(Modality.APPLICATION_MODAL);
-
             controller.initializeWithProduct(prodotto);
-
             finestraAggiungi.showAndWait();
             aggiornaTabella();
-
         } catch (IOException e) {
             e.printStackTrace();
-            mostraMessaggio("Errore", "Errore nell'apertura della finestra di modifica");
+            mostraMessaggio(Alert.AlertType.ERROR, "Errore Applicazione", "Errore Critico", "Impossibile aprire la finestra di modifica.");
         }
     }
 
@@ -162,33 +147,35 @@ public class MainController {
             Stage mainStage = (Stage) tabellaProdotti.getScene().getWindow();
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/dipartimento/prova_scan/aggiungiProdotto.fxml"));
             Parent root = loader.load();
-
             Stage finestraAggiungi = new Stage();
             finestraAggiungi.setTitle("Aggiungi prodotto");
-
-            // --- STILE & DIMENSIONI ---
             Scene scene = new Scene(root, 500, 650);
             scene.getStylesheets().add(getClass().getResource("/com/dipartimento/prova_scan/style.css").toExternalForm());
             finestraAggiungi.setScene(scene);
-            // --------------------------
-
             finestraAggiungi.initOwner(mainStage);
             finestraAggiungi.initModality(Modality.APPLICATION_MODAL);
-
             finestraAggiungi.showAndWait();
             aggiornaTabella();
-
         } catch (IOException e) {
             e.printStackTrace();
-            mostraMessaggio("Errore", "Errore nell'apertura della finestra Aggiungi");
+            mostraMessaggio(Alert.AlertType.ERROR, "Errore Applicazione", "Errore Critico", "Impossibile aprire la finestra di aggiunta.");
         }
     }
 
-    private void mostraMessaggio(String titolo, String messaggio) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(titolo);
-        alert.setHeaderText(null);
+    // Helper aggiornato: accetta DUE titoli distinti
+    private void mostraMessaggio(Alert.AlertType type, String titoloFinestra, String headerInterno, String messaggio) {
+        Alert alert = new Alert(type);
+        alert.setTitle(titoloFinestra);   // Titolo barra in alto
+        alert.setHeaderText(headerInterno); // Titolo dentro la finestra
         alert.setContentText(messaggio);
+        applicaStile(alert);
         alert.showAndWait();
+    }
+
+    private void applicaStile(Alert alert) {
+        DialogPane dialogPane = alert.getDialogPane();
+        dialogPane.getStylesheets().add(
+                getClass().getResource("/com/dipartimento/prova_scan/style.css").toExternalForm()
+        );
     }
 }

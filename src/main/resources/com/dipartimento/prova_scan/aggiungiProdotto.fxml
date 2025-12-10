@@ -43,7 +43,7 @@
         <Button text="📷" fx:id="btnScanDate" GridPane.rowIndex="4" GridPane.columnIndex="2" onAction="#initialize" styleClass="button-icon"/>
 
         <Label text="Quantità:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-        <Spinner fx:id="campoQuantità" editable="true" GridPane.rowIndex="5" GridPane.columnIndex="1" maxWidth="Infinity"/>
+        <Spinner fx:id="campoQuantita" editable="true" GridPane.rowIndex="5" GridPane.columnIndex="1" maxWidth="Infinity"/>
 
     </GridPane>
 

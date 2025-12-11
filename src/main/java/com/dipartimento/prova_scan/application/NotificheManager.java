@@ -70,10 +70,10 @@ public class NotificheManager {
 
                 for (Prodotto p : inScadenza) {
                     long giorni = ChronoUnit.DAYS.between(oggi, p.getDataScadenza());
-                    String testo = String.format("%s - Scade il %s (tra %d giorni)",
-                            p.getNome(), p.getDataScadenza(), giorni);
-                    if (giorni == 0) testo = p.getNome() + " - SCADE OGGI!";
-                    if (giorni == 1) testo = p.getNome() + " - Scade domani";
+                    String testo = String.format("%s (%s) - Scade il %s (tra %d giorni)",
+                            p.getNome(), p.getMarca(), p.getDataScadenza(), giorni);
+                    if (giorni == 0) testo = p.getNome() + " ("+ p.getMarca() +") - Scade oggi!";
+                    if (giorni == 1) testo = p.getNome() + " ("+ p.getMarca() +") - Scade domani";
 
                     Label labelProd = new Label(testo);
                     labelProd.setMaxWidth(Double.MAX_VALUE);

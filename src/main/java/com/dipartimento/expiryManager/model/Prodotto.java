@@ -1,7 +1,8 @@
-package com.dipartimento.prova_scan.domain;
+package com.dipartimento.expiryManager.model;
 
 import java.time.LocalDate;
 
+// Rappresenta l'oggetto Prodotto con i suoi dati.
 public class Prodotto {
     private int id;
     private String nome;
@@ -10,6 +11,8 @@ public class Prodotto {
     private String barcode;
     private LocalDate dataScadenza;
     private int quantita;
+
+    public Prodotto() {}
 
     public Prodotto(int id, String nome, String marca, String categoria, String barcode, LocalDate dataScadenza, int quantita) {
         this.id = id;
@@ -21,6 +24,7 @@ public class Prodotto {
         this.quantita = quantita;
     }
 
+    // Metodi getter e setter per l'accesso e la modifica dei dati
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
 

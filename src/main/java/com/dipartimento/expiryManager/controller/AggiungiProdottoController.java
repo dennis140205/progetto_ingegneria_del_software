@@ -1,11 +1,11 @@
-package com.dipartimento.prova_scan.ui;
+package com.dipartimento.expiryManager.controller;
 
 
-import com.dipartimento.prova_scan.domain.Prodotto;
-import com.dipartimento.prova_scan.services.BarcodeScanner;
-import com.dipartimento.prova_scan.services.DatabaseManager;
-import com.dipartimento.prova_scan.services.DateScanner;
-import com.dipartimento.prova_scan.services.OpenFootFactsAPI;
+import com.dipartimento.expiryManager.model.Prodotto;
+import com.dipartimento.expiryManager.services.scanner.BarcodeScanner;
+import com.dipartimento.expiryManager.services.db.DatabaseManager;
+import com.dipartimento.expiryManager.services.scanner.DateScanner;
+import com.dipartimento.expiryManager.services.api.OpenFootFactsAPI;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -15,6 +15,7 @@ import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 
+// Gestisce la finestra di dialogo per l'aggiunta o la modifica di un prodotto.
 public class AggiungiProdottoController {
 
     @FXML private TextField campoNome, campoMarca, campoCategoria, campoBarcode;
@@ -30,9 +31,11 @@ public class AggiungiProdottoController {
 
     @FXML
     public void initialize() {
+        // Configurazione per la quantità (min 1, max 999)
         campoQuantita.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 999, 1));
     }
 
+    // Avvia il servizio di scansione OCR per rilevare la data di scadenza dalla webcam
     @FXML
     private void scansionaData() {
         Stage currentStage = (Stage) btnScanDate.getScene().getWindow();
@@ -40,6 +43,7 @@ public class AggiungiProdottoController {
         dateScanner.start(currentStage, scannedDate -> {
             if (scannedDate != null) {
                 try {
+                    // Parsing della data rilevata e aggiornamento UI
                     LocalDate parsedDate = LocalDate.parse(scannedDate, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
                     dataScadenza.setValue(parsedDate);
                 } catch (Exception ex) {
@@ -51,6 +55,7 @@ public class AggiungiProdottoController {
     }
 
 
+    // Avvia la scansione del codice a barre tramite webcam
     @FXML
     private void scansionaEInserisciBarcode() {
         Stage currentStage = (Stage) btnScanBarcode.getScene().getWindow();
@@ -59,12 +64,14 @@ public class AggiungiProdottoController {
             if (codice != null) {
                 Platform.runLater(() -> {
                     campoBarcode.setText(codice);
+                    // Una volta scansionato, cerca automaticamente i dettagli
                     cercaInfoBarcode();
                 });
             }
         });
     }
 
+    // Cerca le informazioni del prodotto: prima nel DB locale, poi tramite API esterna
     @FXML
     private void cercaInfoBarcode() {
         String barcode = campoBarcode.getText();
@@ -73,10 +80,12 @@ public class AggiungiProdottoController {
             return;
         }
 
+        // Ricerca nel DB locale
         Prodotto prodottoLocale = db.cercaPerBarcode(barcode);
         if (prodottoLocale != null) {
             precompilaCampiDaProdottoLocale(prodottoLocale);
         } else {
+            // Ricerca su API OpenFoodFacts
             var info = OpenFootFactsAPI.getProdottoByBarcode(barcode);
             if (info != null) {
                 precompilaCampiDaApi(info);
@@ -86,9 +95,11 @@ public class AggiungiProdottoController {
         }
     }
 
+    // Metodo chiamato dal MainController quando si vuole modificare un prodotto esistente
     public void initializeWithProduct(Prodotto prodotto) {
         this.prodottoDaModificare = prodotto;
         precompilaCampiEsistenti(prodotto);
+        // Blocca la modifica del barcode in fase di modifica per evitare incongruenze
         campoBarcode.setEditable(false);
         campoBarcode.setDisable(true);
         btnScanBarcode.setDisable(true);
@@ -117,6 +128,7 @@ public class AggiungiProdottoController {
         campoQuantita.getValueFactory().setValue(p.getQuantita());
     }
 
+    // Logica principale di salvataggio: gestisce inserimento e modifica, inclusa l'aggregazione di prodotti identici
     @FXML
     private void salvaProdotto() {
         String nome = campoNome.getText();
@@ -133,12 +145,15 @@ public class AggiungiProdottoController {
 
         List<Prodotto> prodottiEsistenti = db.getProdotti();
 
+        // Modifica di un prodotto esistente
         if (prodottoDaModificare != null) {
             Prodotto match = null;
+            // Controlla se le modifiche hanno reso questo prodotto identico a un altro già presente
             for (Prodotto p : prodottiEsistenti) {
-                if (p.getId() == prodottoDaModificare.getId()) continue;
-                boolean stessoBarcode = !barcode.isEmpty() && barcode.equals(p.getBarcode()) && scadenza.equals(p.getDataScadenza());
+                if (p.getId() == prodottoDaModificare.getId()) continue; // Salta se stesso
 
+                // Criterio di uguaglianza: stesso Barcode+Scadenza oppure stesso Nome+Scadenza
+                boolean stessoBarcode = !barcode.isEmpty() && barcode.equals(p.getBarcode()) && scadenza.equals(p.getDataScadenza());
                 boolean stessoNome = nome.equals(p.getNome()) && scadenza.equals(p.getDataScadenza());
 
                 if (stessoBarcode || stessoNome) {
@@ -148,23 +163,26 @@ public class AggiungiProdottoController {
             }
 
             if (match != null) {
+                // Aggiorna la quantità del prodotto trovato e rimuove quello vecchio (unione)
                 match.setQuantita(match.getQuantita() + quantitaInserita);
                 db.aggiornaProdotto(match);
                 db.eliminaProdotto(prodottoDaModificare.getId());
 
                 mostraAlert(Alert.AlertType.INFORMATION, "Unione Prodotti", "Prodotto unito. Nuova quantità: " + match.getQuantita());
             } else {
+                // Aggiornamento standard senza unione
                 Prodotto aggiornato = new Prodotto(prodottoDaModificare.getId(), nome, marca, categoria, barcode, scadenza, quantitaInserita);
                 db.aggiornaProdotto(aggiornato);
                 mostraAlert(Alert.AlertType.INFORMATION, "Modifica Completata", "Il prodotto è stato aggiornato.");
             }
 
         } else {
+            // Inserimento di un nuovo prodotto
             Prodotto match = null;
 
+            // Verifica se il prodotto esiste già per aggregare la quantità
             for (Prodotto p : prodottiEsistenti) {
                 boolean stessoBarcode = !barcode.isEmpty() && barcode.equals(p.getBarcode()) && scadenza.equals(p.getDataScadenza());
-
                 boolean stessoNome = nome.equals(p.getNome()) && scadenza.equals(p.getDataScadenza());
 
                 if (stessoBarcode || stessoNome) {
@@ -174,11 +192,13 @@ public class AggiungiProdottoController {
             }
 
             if (match != null) {
+                // Aggiorna quantità esistente
                 match.setQuantita(match.getQuantita() + quantitaInserita);
                 db.aggiornaProdotto(match);
 
                 mostraAlert(Alert.AlertType.INFORMATION, "Prodotto Aggregato", "Quantità aggiornata a: " + match.getQuantita());
             } else {
+                // Crea nuovo record
                 Prodotto nuovo = new Prodotto(0, nome, marca, categoria, barcode, scadenza, quantitaInserita);
                 db.aggiungiProdotto(nuovo);
                 mostraAlert(Alert.AlertType.INFORMATION, "Operazione Completata", "Nuovo prodotto inserito.");
@@ -195,7 +215,7 @@ public class AggiungiProdottoController {
 
         DialogPane dialogPane = alert.getDialogPane();
         dialogPane.getStylesheets().add(
-                getClass().getResource("/com/dipartimento/prova_scan/style.css").toExternalForm()
+                getClass().getResource("/css/style.css").toExternalForm()
         );
 
         alert.showAndWait();

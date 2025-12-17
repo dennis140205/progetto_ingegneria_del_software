@@ -1,4 +1,4 @@
-package com.dipartimento.prova_scan.services;
+package com.dipartimento.expiryManager.services.scanner;
 
 import com.github.sarxos.webcam.Webcam;
 import javafx.application.Platform;
@@ -21,10 +21,11 @@ import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+// Utilizza OCR (Tesseract) per estrarre date di scadenza dalle immagini della webcam.
 public class DateScanner {
     private volatile boolean running = true;
 
-    // Flag per evitare di lanciare troppi processi OCR insieme
+    // Flag per evitare di lanciare troppi processi OCR contemporaneamente, garantendo che l'interfaccia video rimanga fluida.
     private final AtomicBoolean isProcessingOCR = new AtomicBoolean(false);
 
     private String resultText = null;
@@ -40,7 +41,7 @@ public class DateScanner {
         imageView.setFitWidth(800);
         imageView.setFitHeight(600);
 
-        // 1. EFFETTO SPECCHIO
+        // Ribalta l'immagine per rendere l'inquadratura più naturale per l'utente (specchio)
         imageView.setScaleX(-1);
 
         Label overlay = new Label("Inquadra la data");
@@ -53,7 +54,7 @@ public class DateScanner {
         stage.setScene(scene);
         stage.show();
 
-        // Thread Principale: Gestisce SOLO la Webcam (Fluidità massima)
+        // Questo thread gestisce solo il flusso video della Webcam per la massima fluidità
         new Thread(() -> {
             Webcam webcam = Webcam.getDefault();
             if (webcam == null) {
@@ -61,7 +62,7 @@ public class DateScanner {
                 return;
             }
 
-            // Risoluzione media per bilanciare velocità OCR e qualità video
+            // Selezione risoluzione media per bilanciare velocità OCR e qualità video
             Dimension[] sizes = webcam.getViewSizes();
             Dimension best = Arrays.stream(sizes)
                     .max((d1,d2) -> Integer.compare(d1.width*d1.height, d2.width*d2.height))
@@ -70,40 +71,44 @@ public class DateScanner {
 
             if (!webcam.open()) return;
 
-            // Configurazione Tesseract (fuori dal loop)
+            // Configurazione Tesseract (Motore OCR)
             Tesseract tess = new Tesseract();
-            tess.setDatapath("tessdata");
+            tess.setDatapath("src/main/resources/tessdata"); // Cartella contenente i file di lingua (.traineddata)
             tess.setLanguage("ita");
-            // Whitelist: ammettiamo numeri, /, -, . e spazi
+
+            // Whitelist: ottimizza l'OCR limitando i caratteri riconosciuti a numeri e separatori di data
             tess.setTessVariable("tessedit_char_whitelist", "0123456789/-. ");
 
+            // Regex per trovare pattern di date (es. 13/06/2027 o 13-06-27 ecc.)
             Pattern datePattern = Pattern.compile("(\\d{2}[/.-]\\d{2}[/.-]\\d{2,4})");
 
             while (running && resultText == null) {
-                // 1. Cattura Immagine
+                // Cattura frame corrente
                 BufferedImage frame = webcam.getImage();
 
                 if (frame != null) {
-                    // 2. Aggiorna Video (IMMEDIATO)
+                    // Aggiorna video
                     Platform.runLater(() -> imageView.setImage(SwingFXUtils.toFXImage(frame, null)));
 
-                    // 3. Lancia OCR in Background (SOLO SE non sta già lavorando)
+                    // Lancia OCR in Background (solo se non sta già lavorando)
+                    // Questo evita che l'OCR (operazione lenta) blocchi il video
                     if (!isProcessingOCR.get()) {
-                        isProcessingOCR.set(true); // Occupiamo il "semaforo"
+                        isProcessingOCR.set(true); // Occupa il "semaforo"
 
-                        // Creiamo un thread usa-e-getta per l'analisi di QUESTO frame
+                        // Thread per l'analisi OCR di questo specifico frame
                         new Thread(() -> {
                             try {
-                                // Analizziamo l'immagine originale (NON specchiata)
+                                // Esegue l'OCR sull'immagine originale
                                 String ocrResult = tess.doOCR(frame);
 
-                                // Pulizia risultato
+                                // Pulizia stringa risultato
                                 ocrResult = ocrResult.replaceAll("\n", " ").replaceAll("\\s+", "");
 
+                                // Verifica se il testo contiene una data valida
                                 Matcher matcher = datePattern.matcher(ocrResult);
                                 if (matcher.find()) {
                                     resultText = matcher.group(1);
-                                    running = false; // Ferma il loop principale
+                                    running = false; // Ferma il loop della webcam
 
                                     Platform.runLater(() -> {
                                         overlay.setText("Data rilevata: " + resultText);
@@ -111,16 +116,16 @@ public class DateScanner {
                                     });
                                 }
                             } catch (TesseractException e) {
-                                // Ignora errori OCR
+                                // Ignora errori OCR temporanei
                             } finally {
-                                // Finito il lavoro, liberiamo il semaforo per il prossimo frame disponibile
+                                // Pronto per analizzare un nuovo frame
                                 isProcessingOCR.set(false);
                             }
                         }).start();
                     }
                 }
 
-                // Piccola pausa per la webcam (standard 30 fps circa)
+                // Piccola pausa per mantenere il framerate della webcam (30 fps)
                 try { Thread.sleep(30); } catch (Exception e) {}
             }
 

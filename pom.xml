@@ -127,7 +127,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>com.dipartimento.prova_scan.ui.Main</mainClass>
+                    <mainClass>com.dipartimento.expiryManager.Main</mainClass>
                 </configuration>
             </plugin>
 

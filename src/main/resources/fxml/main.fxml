@@ -4,7 +4,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.dipartimento.prova_scan.ui.MainController">
+<BorderPane xmlns:fx="http://javafx.com/fxml" fx:controller="com.dipartimento.expiryManager.controller.MainController">
     <top>
         <ToolBar>
             <Button text="Aggiungi Prodotto" onAction="#apriFinestraAggiungi"/>

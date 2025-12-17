@@ -1,47 +1,32 @@
-package com.dipartimento.prova_scan.services;
+package com.dipartimento.expiryManager.services.db;
 
-import com.dipartimento.prova_scan.domain.Prodotto;
+import com.dipartimento.expiryManager.model.Prodotto;
 
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * --- PATTERN SINGLETON ---
- * Questa classe è un Singleton. Garantisce che esista una sola istanza
- * del DatabaseManager per gestire la connessione al database.
- */
+//Garantisce che esista una sola istanza del DatabaseManager per gestire la connessione
 public class DatabaseManager {
 
-    // --- Inizio Pattern Singleton ---
     private static DatabaseManager instance;
     private final String url = "jdbc:sqlite:prodotti.db";
 
-    /**
-     * Il costruttore è privato per impedire l'istanziazione
-     * esterna (es. con 'new DatabaseManager()').
-     */
     private DatabaseManager() {
         creaTabella();
     }
 
-    /**
-     * Metodo statico per ottenere l'unica istanza della classe.
-     * È 'synchronized' per essere sicuro in caso di multi-threading.
-     * @return L'unica istanza di DatabaseManager.
-     */
     public static synchronized DatabaseManager getInstance() {
         if (instance == null) {
             instance = new DatabaseManager();
         }
         return instance;
     }
-    // --- Fine Pattern Singleton ---
 
 
+    // Inizializza lo schema del database creando la tabella se non esiste
     private void creaTabella() {
-        // (Logica invariata...)
         String sql = """
             CREATE TABLE IF NOT EXISTS prodotti (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -60,8 +45,8 @@ public class DatabaseManager {
     }
 
 
+    // Inserisce un nuovo record nel database
     public void aggiungiProdotto(Prodotto p) {
-        // (Logica invariata...)
         String sql = "INSERT INTO prodotti(nome, marca, categoria, barcode, data_scadenza, quantità) VALUES(?,?,?,?,?,?)";
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -76,8 +61,8 @@ public class DatabaseManager {
     }
 
 
+    // Aggiorna i dati di un prodotto esistente
     public void aggiornaProdotto(Prodotto p) {
-        // (Logica invariata...)
         String sql = "UPDATE prodotti SET nome = ?, marca = ?, categoria = ?, barcode = ?, data_scadenza = ?, quantità = ? WHERE id = ?";
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -93,8 +78,8 @@ public class DatabaseManager {
     }
 
 
+    // Recupera tutti i prodotti e li converte in oggetti Java
     public List<Prodotto> getProdotti() {
-        // (Logica invariata...)
         List<Prodotto> lista = new ArrayList<>();
         String sql = "SELECT * FROM prodotti";
         try (Connection conn = DriverManager.getConnection(url);
@@ -116,8 +101,8 @@ public class DatabaseManager {
     }
 
 
+    // Ricerca per codice a barre
     public Prodotto cercaPerBarcode(String barcode) {
-        // (Logica invariata...)
         String sql = "SELECT * FROM prodotti WHERE barcode = ?";
         try (Connection conn = DriverManager.getConnection(url);
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -138,6 +123,7 @@ public class DatabaseManager {
         return null;
     }
 
+    // Rimuove un prodotto dal DB tramite id
     public void eliminaProdotto(int idProdotto) {
         // (Logica invariata...)
         String sql = "DELETE FROM prodotti WHERE id = ?";

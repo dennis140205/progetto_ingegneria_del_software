@@ -35,7 +35,7 @@ public class MainController {
         colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
         colBarcode.setCellValueFactory(new PropertyValueFactory<>("barcode"));
         colScadenza.setCellValueFactory(new PropertyValueFactory<>("dataScadenza"));
-        colQuantità.setCellValueFactory(new PropertyValueFactory<>("quantità"));
+        colQuantità.setCellValueFactory(new PropertyValueFactory<>("quantita"));
 
         aggiornaTabella();
         NotificheManager.controllaScadenze(db.getProdotti());

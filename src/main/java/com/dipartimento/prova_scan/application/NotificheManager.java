@@ -58,7 +58,7 @@ public class NotificheManager {
 
                 for (Prodotto p : scaduti) {
                     String testo = String.format("%s (%s) [Qtà: %d] - Scaduto il: %s",
-                            p.getNome(), p.getMarca(), p.getquantita(), p.getDataScadenza());
+                            p.getNome(), p.getMarca(), p.getQuantita(), p.getDataScadenza());
 
                     Label labelProd = new Label(testo);
                     labelProd.setMaxWidth(Double.MAX_VALUE);
@@ -78,13 +78,13 @@ public class NotificheManager {
                     String testo;
                     if (giorni == 0) {
                         testo = String.format("%s (%s) [Qtà: %d] - Scade oggi!",
-                                p.getNome(), p.getMarca(), p.getquantita());
+                                p.getNome(), p.getMarca(), p.getQuantita());
                     } else if (giorni == 1) {
                         testo = String.format("%s (%s) [Qtà: %d] - Scade domani",
-                                p.getNome(), p.getMarca(), p.getquantita());
+                                p.getNome(), p.getMarca(), p.getQuantita());
                     } else {
                         testo = String.format("%s (%s) [Qtà: %d] - Scade il %s (tra %d giorni)",
-                                p.getNome(), p.getMarca(), p.getquantita(), p.getDataScadenza(), giorni);
+                                p.getNome(), p.getMarca(), p.getQuantita(), p.getDataScadenza(), giorni);
                     }
 
                     Label labelProd = new Label(testo);

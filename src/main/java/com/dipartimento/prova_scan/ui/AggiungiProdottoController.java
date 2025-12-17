@@ -120,7 +120,7 @@ public class AggiungiProdottoController {
         campoCategoria.setText(p.getCategoria());
         campoBarcode.setText(p.getBarcode());
         dataScadenza.setValue(p.getDataScadenza());
-        campoQuantita.getValueFactory().setValue(p.getquantita());
+        campoQuantita.getValueFactory().setValue(p.getQuantita());
     }
 
     @FXML
@@ -162,7 +162,7 @@ public class AggiungiProdottoController {
             }
 
             if (match != null) {
-                int nuovaQuantitaTotale = match.getquantita() + quantitaInserita;
+                int nuovaQuantitaTotale = match.getQuantita() + quantitaInserita;
                 match.setQuantita(nuovaQuantitaTotale);
                 db.aggiornaProdotto(match);
                 db.eliminaProdotto(prodottoDaModificare.getId());
@@ -189,7 +189,7 @@ public class AggiungiProdottoController {
             }
 
             if (match != null) {
-                int nuovaQuantitaTotale = match.getquantita() + quantitaInserita;
+                int nuovaQuantitaTotale = match.getQuantita() + quantitaInserita;
                 match.setQuantita(nuovaQuantitaTotale);
                 db.aggiornaProdotto(match);
                 mostraAlert(Alert.AlertType.INFORMATION, "Prodotto Aggregato", "Prodotto già presente. Quantità aggiornata a: " + nuovaQuantitaTotale);

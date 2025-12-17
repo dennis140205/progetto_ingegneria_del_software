@@ -50,5 +50,4 @@
     <Region VBox.vgrow="ALWAYS" />
 
     <Button fx:id="btnSalva" text="Salva" maxWidth="Infinity" onAction="#salvaProdotto" style="-fx-font-size: 14px; -fx-padding: 10;"/>
-
 </VBox>

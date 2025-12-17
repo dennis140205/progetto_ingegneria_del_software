@@ -15,21 +15,21 @@ public class Prodotto {
     private String categoria;
     private String barcode;
     private LocalDate dataScadenza;
-    private int quantità;
+    private int quantita;
 
     /**
      * Costruttore Completo.
      * Usato dal DatabaseManager per caricare oggetti dal DB
      * e dal ProdottoBuilderConcreto per costruire l'oggetto finale.
      */
-    public Prodotto(int id, String nome, String marca, String categoria, String barcode, LocalDate dataScadenza, int quantità) {
+    public Prodotto(int id, String nome, String marca, String categoria, String barcode, LocalDate dataScadenza, int quantita) {
         this.id = id;
         this.nome = nome;
         this.marca = marca;
         this.categoria = categoria;
         this.barcode = barcode;
         this.dataScadenza = dataScadenza;
-        this.quantità = quantità;
+        this.quantita = quantita;
     }
 
     // --- Getters (invariati) ---
@@ -39,11 +39,11 @@ public class Prodotto {
     public String getCategoria() { return categoria; }
     public String getBarcode() { return barcode; }
     public LocalDate getDataScadenza() { return dataScadenza; }
-    public int getquantita() { return quantità; }
+    public int getquantita() { return quantita; }
 
     // --- Setters (usati per la modifica) ---
     public void setId(int id) { this.id = id; }
-    public void setQuantità(int quantità) { this.quantità = quantità; }
+    public void setQuantita(int quantita) { this.quantita = quantita; }
 
     // --- Metodi Fluent (RIMOSSI) ---
     // public Prodotto setMarca(String marca) { ... }

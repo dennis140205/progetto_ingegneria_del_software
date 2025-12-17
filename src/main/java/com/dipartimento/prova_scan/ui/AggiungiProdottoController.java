@@ -130,7 +130,7 @@ public class AggiungiProdottoController {
         String categoria = campoCategoria.getText();
         String barcode = campoBarcode.getText();
         LocalDate scadenza = dataScadenza.getValue();
-        int quantitàInserita = campoQuantita.getValue();
+        int quantitaInserita = campoQuantita.getValue();
 
         if (nome.isEmpty() || scadenza == null) {
             mostraAlert(Alert.AlertType.WARNING, "Dati Mancanti", "Nome e Data Scadenza sono obbligatori.");
@@ -146,7 +146,7 @@ public class AggiungiProdottoController {
         builder.impostaCategoria(categoria);
         builder.impostaBarcode(barcode);
         builder.impostaScadenza(scadenza);
-        builder.impostaQuantita(quantitàInserita);
+        builder.impostaQuantita(quantitaInserita);
         // ------------------------------------------
 
         if (prodottoDaModificare != null) {
@@ -162,11 +162,11 @@ public class AggiungiProdottoController {
             }
 
             if (match != null) {
-                int nuovaQuantitàTotale = match.getquantita() + quantitàInserita;
-                match.setQuantità(nuovaQuantitàTotale);
+                int nuovaQuantitaTotale = match.getquantita() + quantitaInserita;
+                match.setQuantita(nuovaQuantitaTotale);
                 db.aggiornaProdotto(match);
                 db.eliminaProdotto(prodottoDaModificare.getId());
-                mostraAlert(Alert.AlertType.INFORMATION, "Unione Prodotti", "Prodotto unito a uno esistente.\nNuova quantità: " + nuovaQuantitàTotale);
+                mostraAlert(Alert.AlertType.INFORMATION, "Unione Prodotti", "Prodotto unito a uno esistente.\nNuova quantità: " + nuovaQuantitaTotale);
             } else {
                 // --- USO DEL BUILDER PER LA MODIFICA ---
                 builder.impostaId(prodottoDaModificare.getId());
@@ -189,10 +189,10 @@ public class AggiungiProdottoController {
             }
 
             if (match != null) {
-                int nuovaQuantitàTotale = match.getquantita() + quantitàInserita;
-                match.setQuantità(nuovaQuantitàTotale);
+                int nuovaQuantitaTotale = match.getquantita() + quantitaInserita;
+                match.setQuantita(nuovaQuantitaTotale);
                 db.aggiornaProdotto(match);
-                mostraAlert(Alert.AlertType.INFORMATION, "Prodotto Aggregato", "Prodotto già presente. Quantità aggiornata a: " + nuovaQuantitàTotale);
+                mostraAlert(Alert.AlertType.INFORMATION, "Prodotto Aggregato", "Prodotto già presente. Quantità aggiornata a: " + nuovaQuantitaTotale);
             } else {
                 // --- USO DEL BUILDER PER L'AGGIUNTA ---
                 builder.impostaId(0);

@@ -12,24 +12,25 @@ import javafx.stage.Stage;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class NotificheManager {
 
-    private static boolean emailInviataQuestaSessione = false;
+    // Thread-safe: email inviata una sola volta per sessione
+    private static final AtomicBoolean emailInviata = new AtomicBoolean(false);
 
-    // --- PATTERN STRATEGY: Uso dell'interfaccia rinominata ---
-    private static StrategiaNotifica strategiaDiNotifica = new StrategiaNotificaTesto();
+    // Pattern Strategy
+    private static final StrategiaNotifica strategiaDiNotifica = new StrategiaNotificaTesto();
 
     public static void controllaScadenze(List<Prodotto> prodotti) {
         LocalDate oggi = LocalDate.now();
 
-        // Filtra prodotti scaduti
         List<Prodotto> scaduti = prodotti.stream()
                 .filter(p -> p.getDataScadenza().isBefore(oggi))
                 .collect(Collectors.toList());
 
-        // Filtra prodotti in scadenza (prossimi 3 giorni)
         List<Prodotto> inScadenza = prodotti.stream()
                 .filter(p -> !p.getDataScadenza().isBefore(oggi))
                 .filter(p -> p.getDataScadenza().isBefore(oggi.plusDays(3)))
@@ -39,97 +40,79 @@ public class NotificheManager {
             return;
         }
 
-        // GUI: Mostra l'alert a schermo (Layout a blocchi colorati)
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.WARNING);
-            alert.setTitle("Notifiche Scadenze");
-            alert.setHeaderText("Riepilogo prodotti");
-            alert.setResizable(true);
-            alert.getDialogPane().setPrefWidth(550);
+        // Lista dei prodotti da notificare
+        List<Prodotto> prodottiDaNotificare = Stream.concat(scaduti.stream(), inScadenza.stream()).toList();
 
-            VBox contentBox = new VBox(8);
-            contentBox.getStyleClass().add("notifica-box");
+        // --- GUI ---
+        Platform.runLater(() -> mostraNotifica(scaduti, inScadenza, oggi));
 
-            // SEZIONE PRODOTTI SCADUTI
-            if (!scaduti.isEmpty()) {
-                Label titolo = new Label("SCADUTI");
-                titolo.getStyleClass().add("notifica-titolo-sezione");
-                contentBox.getChildren().add(titolo);
+        // --- EMAIL (una sola volta) ---
+        if (emailInviata.compareAndSet(false, true)) {
+            String messaggio = strategiaDiNotifica.creaMessaggio(prodottiDaNotificare);
 
-                for (Prodotto p : scaduti) {
-                    String testo = String.format("%s (%s) [Qtà: %d] - Scaduto il: %s",
-                            p.getNome(), p.getMarca(), p.getQuantita(), p.getDataScadenza());
-
-                    Label labelProd = new Label(testo);
-                    labelProd.setMaxWidth(Double.MAX_VALUE);
-                    labelProd.getStyleClass().add("notifica-item-scaduto");
-                    contentBox.getChildren().add(labelProd);
-                }
-            }
-
-            // SEZIONE PRODOTTI IN SCADENZA
-            if (!inScadenza.isEmpty()) {
-                Label titolo = new Label("IN SCADENZA");
-                titolo.getStyleClass().add("notifica-titolo-sezione");
-                contentBox.getChildren().add(titolo);
-
-                for (Prodotto p : inScadenza) {
-                    long giorni = ChronoUnit.DAYS.between(oggi, p.getDataScadenza());
-                    String testo;
-                    if (giorni == 0) {
-                        testo = String.format("%s (%s) [Qtà: %d] - Scade oggi!",
-                                p.getNome(), p.getMarca(), p.getQuantita());
-                    } else if (giorni == 1) {
-                        testo = String.format("%s (%s) [Qtà: %d] - Scade domani",
-                                p.getNome(), p.getMarca(), p.getQuantita());
-                    } else {
-                        testo = String.format("%s (%s) [Qtà: %d] - Scade il %s (tra %d giorni)",
-                                p.getNome(), p.getMarca(), p.getQuantita(), p.getDataScadenza(), giorni);
-                    }
-
-                    Label labelProd = new Label(testo);
-                    labelProd.setMaxWidth(Double.MAX_VALUE);
-                    labelProd.getStyleClass().add("notifica-item-in-scadenza");
-                    contentBox.getChildren().add(labelProd);
-                }
-            }
-
-            ScrollPane scrollPane = new ScrollPane(contentBox);
-            scrollPane.setFitToWidth(true);
-
-            int numeroElementi = scaduti.size() + inScadenza.size();
-            double altezzaNecessaria = (numeroElementi * 45) + 120;
-            double altezzaFinale = Math.min(altezzaNecessaria, 400);
-
-            scrollPane.setPrefHeight(altezzaFinale);
-            scrollPane.setStyle("-fx-background-color:transparent; -fx-background-insets: 0;");
-
-            alert.getDialogPane().setContent(scrollPane);
-
-            DialogPane dialogPane = alert.getDialogPane();
-            // Assicurati che il percorso del CSS sia corretto
-            try {
-                dialogPane.getStylesheets().add(
-                        NotificheManager.class.getResource("/com/dipartimento/prova_scan/style.css").toExternalForm()
-                );
-            } catch (Exception e) {
-                System.out.println("CSS non trovato, procedo senza stile personalizzato.");
-            }
-
-            Stage stage = (Stage) dialogPane.getScene().getWindow();
-            stage.setAlwaysOnTop(true);
-            alert.showAndWait();
-        });
-
-        // Invio Email: Usa il Pattern Strategy per generare il testo
-        if (!emailInviataQuestaSessione) {
-            String messaggioEmail = strategiaDiNotifica.creaMessaggio(prodotti);
-            if (messaggioEmail != null && !messaggioEmail.isEmpty()) {
-                new Thread(() -> {
-                    EmailManager.inviaEmailScadenza(messaggioEmail);
-                    emailInviataQuestaSessione = true;
-                }).start();
+            if (messaggio != null && !messaggio.isBlank()) {
+                new Thread(() -> EmailManager.inviaEmailScadenza(messaggio)).start();
             }
         }
+    }
+
+    // --- METODO GUI SEPARATO (più pulito) ---
+    private static void mostraNotifica(List<Prodotto> scaduti, List<Prodotto> inScadenza, LocalDate oggi) {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Notifiche Scadenze");
+        alert.setHeaderText("Riepilogo prodotti");
+        alert.setResizable(true);
+        alert.getDialogPane().setPrefWidth(550);
+
+        VBox contentBox = new VBox(8);
+        contentBox.getStyleClass().add("notifica-box");
+
+        if (!scaduti.isEmpty()) {
+            Label titolo = new Label("SCADUTI");
+            titolo.getStyleClass().add("notifica-titolo-sezione");
+            contentBox.getChildren().add(titolo);
+
+            for (Prodotto p : scaduti) {
+                Label label = new Label(String.format("%s (%s) [Qtà: %d] - Scaduto il: %s", p.getNome(), p.getMarca(), p.getQuantita(), p.getDataScadenza()));
+                label.getStyleClass().add("notifica-item-scaduto");
+                label.setMaxWidth(Double.MAX_VALUE);
+                contentBox.getChildren().add(label);
+            }
+        }
+
+        if (!inScadenza.isEmpty()) {
+            Label titolo = new Label("IN SCADENZA");
+            titolo.getStyleClass().add("notifica-titolo-sezione");
+            contentBox.getChildren().add(titolo);
+
+            for (Prodotto p : inScadenza) {
+                long giorni = ChronoUnit.DAYS.between(oggi, p.getDataScadenza());
+
+                String testo = switch ((int) giorni) {
+                    case 0 -> String.format("%s (%s) [Qtà: %d] - Scade oggi!", p.getNome(), p.getMarca(), p.getQuantita());
+                    case 1 -> String.format("%s (%s) [Qtà: %d] - Scade domani", p.getNome(), p.getMarca(), p.getQuantita());
+                    default -> String.format("%s (%s) [Qtà: %d] - Scade il %s (tra %d giorni)", p.getNome(), p.getMarca(), p.getQuantita(), p.getDataScadenza(), giorni);
+                };
+
+                Label label = new Label(testo);
+                label.getStyleClass().add("notifica-item-in-scadenza");
+                label.setMaxWidth(Double.MAX_VALUE);
+                contentBox.getChildren().add(label);
+            }
+        }
+
+        ScrollPane scrollPane = new ScrollPane(contentBox);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPrefHeight(Math.min((scaduti.size() + inScadenza.size()) * 45 + 120, 400));
+
+        alert.getDialogPane().setContent(scrollPane);
+
+        try {
+            alert.getDialogPane().getStylesheets().add(NotificheManager.class.getResource("/com/dipartimento/prova_scan/style.css").toExternalForm());
+        } catch (Exception ignored) {}
+
+        Stage stage = (Stage) alert.getDialogPane().getScene().getWindow();
+        stage.setAlwaysOnTop(true);
+        alert.showAndWait();
     }
 }

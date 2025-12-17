@@ -23,7 +23,7 @@ public class DatabaseManager {
      * esterna (es. con 'new DatabaseManager()').
      */
     private DatabaseManager() {
-        creaTabellaSeNonEsiste();
+        creaTabella();
     }
 
     /**
@@ -40,7 +40,7 @@ public class DatabaseManager {
     // --- Fine Pattern Singleton ---
 
 
-    private void creaTabellaSeNonEsiste() {
+    private void creaTabella() {
         // (Logica invariata...)
         String sql = """
             CREATE TABLE IF NOT EXISTS prodotti (

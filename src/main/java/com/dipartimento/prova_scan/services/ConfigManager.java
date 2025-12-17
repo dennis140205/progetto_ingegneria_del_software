@@ -36,25 +36,25 @@ public class ConfigManager {
     }
 
     public static Properties getSmtpProperties() {
-        return smtpProperties;
+        Properties copy = new Properties();
+        copy.putAll(smtpProperties);
+        return copy;
     }
 
     public static Properties getUserProperties() {
-        return userProperties;
+        Properties copy = new Properties();
+        copy.putAll(userProperties);
+        return copy;
     }
 
     public static String getUserEmail() {
         return userProperties.getProperty("mail.to", "");
     }
 
-    /**
-     * --- NUOVO METODO ---
-     * Salva SOLO l'email del destinatario nel file esterno.
-     */
     public static void saveUserEmail(String toEmail) {
         userProperties.setProperty("mail.to", toEmail);
-
-        try (FileOutputStream fos = new FileOutputStream(CONFIG_FILE_PATH)) {
+        File configFile = new File(CONFIG_FILE_PATH);
+        try (FileOutputStream fos = new FileOutputStream(configFile)) {
             userProperties.store(fos, "Configurazione Utente - Solo Destinatario");
             System.out.println("Email destinatario salvata in: " + CONFIG_FILE_PATH);
         } catch (Exception e) {

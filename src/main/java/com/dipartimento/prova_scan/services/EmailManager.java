@@ -9,24 +9,22 @@ import java.util.Properties;
 public class EmailManager {
 
     public static void inviaEmailScadenza(String messaggioProdotti) {
-        // 1. Carica le proprietà interne (che ora includono anche user/pass)
         Properties smtpProps = ConfigManager.getSmtpProperties();
+        String toEmail = ConfigManager.getUserEmail();
 
-        // 2. Ottieni l'email del destinatario (quella rimane scelta dall'utente)
-        final String toEmail = ConfigManager.getUserEmail();
+        String username = smtpProps.getProperty("mail.username");
+        String password = smtpProps.getProperty("mail.password");
 
-        // --- MODIFICA: Prendi le credenziali dal file interno ---
-        final String username = smtpProps.getProperty("mail.username");
-        final String password = smtpProps.getProperty("mail.password");
-        // --------------------------------------------------------
-
-        // Controllo di sicurezza
-        if (toEmail == null || toEmail.isEmpty() || !toEmail.contains("@")) {
-            System.err.println("Invio email fallito: 'Email Destinatario' non è impostata.");
+        if (toEmail == null || !toEmail.contains("@")) {
+            System.err.println("Email destinatario non valida.");
             return;
         }
 
-        // Passa le smtpProps per la sessione
+        if (username == null || password == null) {
+            System.err.println("Credenziali SMTP mancanti.");
+            return;
+        }
+
         Session session = Session.getInstance(smtpProps, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -40,12 +38,10 @@ public class EmailManager {
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
             message.setSubject("Avviso Scadenza Prodotti");
 
-            String corpoEmail = "Attenzione! I seguenti prodotti sono in scadenza:\n\n"
-                    + messaggioProdotti;
-            message.setText(corpoEmail);
+            message.setText("Attenzione!\n\nI seguenti prodotti sono in scadenza:\n\n" + messaggioProdotti);
 
             Transport.send(message);
-            System.out.println("Email di avviso inviata con successo a " + toEmail);
+            System.out.println("Email inviata correttamente a " + toEmail);
 
         } catch (MessagingException e) {
             System.err.println("Errore durante l'invio dell'email:");

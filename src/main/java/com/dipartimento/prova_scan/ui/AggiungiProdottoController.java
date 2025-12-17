@@ -1,7 +1,6 @@
 package com.dipartimento.prova_scan.ui;
 
-import com.dipartimento.prova_scan.domain.CostruttoreProdotto;
-import com.dipartimento.prova_scan.domain.CostruttoreProdottoStandard;
+
 import com.dipartimento.prova_scan.domain.Prodotto;
 import com.dipartimento.prova_scan.services.BarcodeScanner;
 import com.dipartimento.prova_scan.services.DatabaseManager;
@@ -32,30 +31,25 @@ public class AggiungiProdottoController {
     @FXML
     public void initialize() {
         campoQuantita.setValueFactory(new SpinnerValueFactory.IntegerSpinnerValueFactory(1, 999, 1));
+    }
 
-        btnScanDate.setOnAction(e -> {
-            Stage currentStage = (Stage) btnScanDate.getScene().getWindow();
-            DateScanner ds = new DateScanner();
-            ds.start(currentStage, scannedDate -> {
-                if (scannedDate != null) {
-                    try {
-                        LocalDate parsedDate;
-                        if (scannedDate.length() == 10) {
-                            parsedDate = LocalDate.parse(scannedDate, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
-                        } else if (scannedDate.length() == 8) {
-                            parsedDate = LocalDate.parse(scannedDate, DateTimeFormatter.ofPattern("dd/MM/yy"));
-                        } else {
-                            throw new java.time.format.DateTimeParseException("Formato non riconosciuto", scannedDate, 0);
-                        }
-                        dataScadenza.setValue(parsedDate);
-                    } catch (Exception ex) {
-                        System.err.println("Data non valida: " + scannedDate);
-                        mostraAlert(Alert.AlertType.WARNING, "Errore Data", "Data non riconosciuta.");
-                    }
+    @FXML
+    private void scansionaData() {
+        Stage currentStage = (Stage) btnScanDate.getScene().getWindow();
+        DateScanner dateScanner = new DateScanner();
+        dateScanner.start(currentStage, scannedDate -> {
+            if (scannedDate != null) {
+                try {
+                    LocalDate parsedDate = LocalDate.parse(scannedDate, DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+                    dataScadenza.setValue(parsedDate);
+                } catch (Exception ex) {
+                    System.err.println("Data non valida: " + scannedDate);
+                    mostraAlert(Alert.AlertType.WARNING, "Errore Data", "Data non riconosciuta.");
                 }
-            });
+            }
         });
     }
+
 
     @FXML
     private void scansionaEInserisciBarcode() {
@@ -132,80 +126,65 @@ public class AggiungiProdottoController {
         LocalDate scadenza = dataScadenza.getValue();
         int quantitaInserita = campoQuantita.getValue();
 
-        if (nome.isEmpty() || scadenza == null) {
+        if (nome == null || nome.isBlank() || scadenza == null) {
             mostraAlert(Alert.AlertType.WARNING, "Dati Mancanti", "Nome e Data Scadenza sono obbligatori.");
             return;
         }
 
         List<Prodotto> prodottiEsistenti = db.getProdotti();
 
-        // --- PATTERN BUILDER: Inizializzazione ---
-        CostruttoreProdotto builder = new CostruttoreProdottoStandard();
-        builder.impostaNome(nome);
-        builder.impostaMarca(marca);
-        builder.impostaCategoria(categoria);
-        builder.impostaBarcode(barcode);
-        builder.impostaScadenza(scadenza);
-        builder.impostaQuantita(quantitaInserita);
-        // ------------------------------------------
-
         if (prodottoDaModificare != null) {
             Prodotto match = null;
             for (Prodotto p : prodottiEsistenti) {
                 if (p.getId() == prodottoDaModificare.getId()) continue;
-                boolean barcodeMatch = !barcode.isEmpty() && barcode.equals(p.getBarcode()) && scadenza.equals(p.getDataScadenza());
-                boolean nameMatch = !nome.isEmpty() && nome.equals(p.getNome()) && scadenza.equals(p.getDataScadenza());
-                if (barcodeMatch || nameMatch) {
+                boolean stessoBarcode = !barcode.isEmpty() && barcode.equals(p.getBarcode()) && scadenza.equals(p.getDataScadenza());
+
+                boolean stessoNome = nome.equals(p.getNome()) && scadenza.equals(p.getDataScadenza());
+
+                if (stessoBarcode || stessoNome) {
                     match = p;
                     break;
                 }
             }
 
             if (match != null) {
-                int nuovaQuantitaTotale = match.getQuantita() + quantitaInserita;
-                match.setQuantita(nuovaQuantitaTotale);
+                match.setQuantita(match.getQuantita() + quantitaInserita);
                 db.aggiornaProdotto(match);
                 db.eliminaProdotto(prodottoDaModificare.getId());
-                mostraAlert(Alert.AlertType.INFORMATION, "Unione Prodotti", "Prodotto unito a uno esistente.\nNuova quantità: " + nuovaQuantitaTotale);
-            } else {
-                // --- USO DEL BUILDER PER LA MODIFICA ---
-                builder.impostaId(prodottoDaModificare.getId());
-                Prodotto p = builder.costruisci();
-                // ---------------------------------------
 
-                db.aggiornaProdotto(p);
+                mostraAlert(Alert.AlertType.INFORMATION, "Unione Prodotti", "Prodotto unito. Nuova quantità: " + match.getQuantita());
+            } else {
+                Prodotto aggiornato = new Prodotto(prodottoDaModificare.getId(), nome, marca, categoria, barcode, scadenza, quantitaInserita);
+                db.aggiornaProdotto(aggiornato);
                 mostraAlert(Alert.AlertType.INFORMATION, "Modifica Completata", "Il prodotto è stato aggiornato.");
             }
 
         } else {
             Prodotto match = null;
+
             for (Prodotto p : prodottiEsistenti) {
-                boolean barcodeMatch = !barcode.isEmpty() && barcode.equals(p.getBarcode()) && scadenza.equals(p.getDataScadenza());
-                boolean nameMatch = !nome.isEmpty() && nome.equals(p.getNome()) && scadenza.equals(p.getDataScadenza());
-                if (barcodeMatch || nameMatch) {
+                boolean stessoBarcode = !barcode.isEmpty() && barcode.equals(p.getBarcode()) && scadenza.equals(p.getDataScadenza());
+
+                boolean stessoNome = nome.equals(p.getNome()) && scadenza.equals(p.getDataScadenza());
+
+                if (stessoBarcode || stessoNome) {
                     match = p;
                     break;
                 }
             }
 
             if (match != null) {
-                int nuovaQuantitaTotale = match.getQuantita() + quantitaInserita;
-                match.setQuantita(nuovaQuantitaTotale);
+                match.setQuantita(match.getQuantita() + quantitaInserita);
                 db.aggiornaProdotto(match);
-                mostraAlert(Alert.AlertType.INFORMATION, "Prodotto Aggregato", "Prodotto già presente. Quantità aggiornata a: " + nuovaQuantitaTotale);
-            } else {
-                // --- USO DEL BUILDER PER L'AGGIUNTA ---
-                builder.impostaId(0);
-                Prodotto p = builder.costruisci();
-                // --------------------------------------
 
-                db.aggiungiProdotto(p);
+                mostraAlert(Alert.AlertType.INFORMATION, "Prodotto Aggregato", "Quantità aggiornata a: " + match.getQuantita());
+            } else {
+                Prodotto nuovo = new Prodotto(0, nome, marca, categoria, barcode, scadenza, quantitaInserita);
+                db.aggiungiProdotto(nuovo);
                 mostraAlert(Alert.AlertType.INFORMATION, "Operazione Completata", "Nuovo prodotto inserito.");
             }
         }
-
-        Stage stage = (Stage) btnSalva.getScene().getWindow();
-        stage.close();
+        ((Stage) btnSalva.getScene().getWindow()).close();
     }
 
     private void mostraAlert(Alert.AlertType type, String titolo, String messaggio) {

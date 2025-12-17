@@ -28,7 +28,7 @@
                 <TableColumn fx:id="colCategoria" text="Categoria" />
                 <TableColumn fx:id="colBarcode" text="Barcode" />
                 <TableColumn fx:id="colScadenza" text="Scadenza" />
-                <TableColumn fx:id="colQuantità" text="Quantità" />
+                <TableColumn fx:id="colQuantita" text="Quantità" />
             </columns>
         </TableView>
     </center>

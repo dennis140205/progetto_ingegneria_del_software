@@ -23,7 +23,7 @@ public class MainController {
     @FXML private TableView<Prodotto> tabellaProdotti;
     @FXML private TableColumn<Prodotto, String> colNome, colMarca, colCategoria, colBarcode;
     @FXML private TableColumn<Prodotto, LocalDate> colScadenza;
-    @FXML private TableColumn<Prodotto, Integer> colQuantità;
+    @FXML private TableColumn<Prodotto, Integer> colQuantita;
     @FXML private TextField campoEmailNotifiche;
 
     private DatabaseManager db = DatabaseManager.getInstance();
@@ -35,7 +35,7 @@ public class MainController {
         colCategoria.setCellValueFactory(new PropertyValueFactory<>("categoria"));
         colBarcode.setCellValueFactory(new PropertyValueFactory<>("barcode"));
         colScadenza.setCellValueFactory(new PropertyValueFactory<>("dataScadenza"));
-        colQuantità.setCellValueFactory(new PropertyValueFactory<>("quantita"));
+        colQuantita.setCellValueFactory(new PropertyValueFactory<>("quantita"));
 
         aggiornaTabella();
         NotificheManager.controllaScadenze(db.getProdotti());
@@ -103,7 +103,8 @@ public class MainController {
     @FXML
     private void salvaImpostazioniEmail() {
         String destinatario = campoEmailNotifiche.getText();
-        if (destinatario.isEmpty() || !destinatario.contains("@")) {
+        if (!destinatario.matches(".+@.+\\..+"))
+        {
             mostraMessaggio(Alert.AlertType.WARNING,
                     "Errore Validazione",
                     "Email non valida",
@@ -118,8 +119,7 @@ public class MainController {
     }
 
     private void aggiornaTabella() {
-        List<Prodotto> prodotti = db.getProdotti();
-        tabellaProdotti.getItems().setAll(prodotti);
+        tabellaProdotti.getItems().setAll(db.getProdotti());
     }
 
     private void apriFinestraModifica(Prodotto prodotto) {

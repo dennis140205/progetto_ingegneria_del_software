@@ -98,7 +98,9 @@
     -fx-border-width: 0 0 0 5;
 }
 .table-row-cell.in-scadenza:selected { -fx-background-color: #fff59d; -fx-border-color: #f57f17; }
-
+.table-row-cell:empty {
+    -fx-background-color: transparent;
+}
 /* --- Menu Contestuale --- */
 .context-menu {
     -fx-background-color: white;

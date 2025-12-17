@@ -30,17 +30,27 @@ public class StrategiaNotificaTesto implements StrategiaNotifica {
         StringBuilder sb = new StringBuilder();
 
         if (!scaduti.isEmpty()) {
-            sb.append("--- SCADUTI ---\n");
+            sb.append("SCADUTI:\n");
             for (Prodotto p : scaduti) {
-                sb.append("- ").append(p.getNome()).append(" (").append(p.getDataScadenza()).append(")\n");
+                sb.append("- ")
+                        .append(p.getNome())
+                        .append(" (").append(p.getMarca())
+                        .append(") | Qtà: ").append(p.getQuantita())
+                        .append(" | Scadenza: ").append(p.getDataScadenza())
+                        .append("\n");
             }
             sb.append("\n");
         }
 
         if (!inScadenza.isEmpty()) {
-            sb.append("--- IN SCADENZA (Entro 3 gg) ---\n");
+            sb.append("IN SCADENZA (Entro 3 gg):\n");
             for (Prodotto p : inScadenza) {
-                sb.append("- ").append(p.getNome()).append(" (").append(p.getDataScadenza()).append(")\n");
+                sb.append("- ")
+                        .append(p.getNome())
+                        .append(" (").append(p.getMarca())
+                        .append(") | Qtà: ").append(p.getQuantita())
+                        .append(" | Scadenza: ").append(p.getDataScadenza())
+                        .append("\n");
             }
         }
 

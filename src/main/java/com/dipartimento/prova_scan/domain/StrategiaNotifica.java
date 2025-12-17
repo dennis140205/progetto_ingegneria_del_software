@@ -11,8 +11,8 @@ public interface StrategiaNotifica {
 
     /**
      * Crea il testo del messaggio da inviare o mostrare.
-     * @param tuttiProdotti La lista dei prodotti.
+     * @param prodotti La lista dei prodotti.
      * @return Il messaggio formattato.
      */
-    String creaMessaggio(List<Prodotto> tuttiProdotti);
+    String creaMessaggio(List<Prodotto> prodotti);
 }

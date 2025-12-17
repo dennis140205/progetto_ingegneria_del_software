@@ -39,7 +39,7 @@ public class Prodotto {
     public String getCategoria() { return categoria; }
     public String getBarcode() { return barcode; }
     public LocalDate getDataScadenza() { return dataScadenza; }
-    public int getQuantità() { return quantità; }
+    public int getquantita() { return quantità; }
 
     // --- Setters (usati per la modifica) ---
     public void setId(int id) { this.id = id; }

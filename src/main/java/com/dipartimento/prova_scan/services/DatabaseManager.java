@@ -70,7 +70,7 @@ public class DatabaseManager {
             ps.setString(3, p.getCategoria());
             ps.setString(4, p.getBarcode());
             ps.setString(5, p.getDataScadenza().toString());
-            ps.setInt(6, p.getQuantità());
+            ps.setInt(6, p.getquantita());
             ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }
     }
@@ -86,7 +86,7 @@ public class DatabaseManager {
             ps.setString(3, p.getCategoria());
             ps.setString(4, p.getBarcode());
             ps.setString(5, p.getDataScadenza().toString());
-            ps.setInt(6, p.getQuantità());
+            ps.setInt(6, p.getquantita());
             ps.setInt(7, p.getId());
             ps.executeUpdate();
         } catch (Exception e) { e.printStackTrace(); }

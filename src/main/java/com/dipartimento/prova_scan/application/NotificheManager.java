@@ -24,10 +24,12 @@ public class NotificheManager {
     public static void controllaScadenze(List<Prodotto> prodotti) {
         LocalDate oggi = LocalDate.now();
 
+        // Filtra prodotti scaduti
         List<Prodotto> scaduti = prodotti.stream()
                 .filter(p -> p.getDataScadenza().isBefore(oggi))
                 .collect(Collectors.toList());
 
+        // Filtra prodotti in scadenza (prossimi 3 giorni)
         List<Prodotto> inScadenza = prodotti.stream()
                 .filter(p -> !p.getDataScadenza().isBefore(oggi))
                 .filter(p -> p.getDataScadenza().isBefore(oggi.plusDays(3)))
@@ -43,19 +45,21 @@ public class NotificheManager {
             alert.setTitle("Notifiche Scadenze");
             alert.setHeaderText("Riepilogo prodotti");
             alert.setResizable(true);
-            alert.getDialogPane().setPrefWidth(500);
+            alert.getDialogPane().setPrefWidth(550);
 
             VBox contentBox = new VBox(8);
             contentBox.getStyleClass().add("notifica-box");
 
+            // SEZIONE PRODOTTI SCADUTI
             if (!scaduti.isEmpty()) {
                 Label titolo = new Label("SCADUTI");
                 titolo.getStyleClass().add("notifica-titolo-sezione");
                 contentBox.getChildren().add(titolo);
 
                 for (Prodotto p : scaduti) {
-                    String testo = String.format("%s (%s) - Scaduto il: %s",
-                            p.getNome(), p.getMarca(), p.getDataScadenza());
+                    String testo = String.format("%s (%s) [Qtà: %d] - Scaduto il: %s",
+                            p.getNome(), p.getMarca(), p.getquantita(), p.getDataScadenza());
+
                     Label labelProd = new Label(testo);
                     labelProd.setMaxWidth(Double.MAX_VALUE);
                     labelProd.getStyleClass().add("notifica-item-scaduto");
@@ -63,6 +67,7 @@ public class NotificheManager {
                 }
             }
 
+            // SEZIONE PRODOTTI IN SCADENZA
             if (!inScadenza.isEmpty()) {
                 Label titolo = new Label("IN SCADENZA");
                 titolo.getStyleClass().add("notifica-titolo-sezione");
@@ -70,10 +75,17 @@ public class NotificheManager {
 
                 for (Prodotto p : inScadenza) {
                     long giorni = ChronoUnit.DAYS.between(oggi, p.getDataScadenza());
-                    String testo = String.format("%s (%s) - Scade il %s (tra %d giorni)",
-                            p.getNome(), p.getMarca(), p.getDataScadenza(), giorni);
-                    if (giorni == 0) testo = p.getNome() + " ("+ p.getMarca() +") - Scade oggi!";
-                    if (giorni == 1) testo = p.getNome() + " ("+ p.getMarca() +") - Scade domani";
+                    String testo;
+                    if (giorni == 0) {
+                        testo = String.format("%s (%s) [Qtà: %d] - Scade oggi!",
+                                p.getNome(), p.getMarca(), p.getquantita());
+                    } else if (giorni == 1) {
+                        testo = String.format("%s (%s) [Qtà: %d] - Scade domani",
+                                p.getNome(), p.getMarca(), p.getquantita());
+                    } else {
+                        testo = String.format("%s (%s) [Qtà: %d] - Scade il %s (tra %d giorni)",
+                                p.getNome(), p.getMarca(), p.getquantita(), p.getDataScadenza(), giorni);
+                    }
 
                     Label labelProd = new Label(testo);
                     labelProd.setMaxWidth(Double.MAX_VALUE);
@@ -95,9 +107,14 @@ public class NotificheManager {
             alert.getDialogPane().setContent(scrollPane);
 
             DialogPane dialogPane = alert.getDialogPane();
-            dialogPane.getStylesheets().add(
-                    NotificheManager.class.getResource("/com/dipartimento/prova_scan/style.css").toExternalForm()
-            );
+            // Assicurati che il percorso del CSS sia corretto
+            try {
+                dialogPane.getStylesheets().add(
+                        NotificheManager.class.getResource("/com/dipartimento/prova_scan/style.css").toExternalForm()
+                );
+            } catch (Exception e) {
+                System.out.println("CSS non trovato, procedo senza stile personalizzato.");
+            }
 
             Stage stage = (Stage) dialogPane.getScene().getWindow();
             stage.setAlwaysOnTop(true);
